@@ -490,10 +490,11 @@ function App() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="overflow-x-auto">
-                  <table className="w-full text-sm border-collapse min-w-[640px]">
+                  <table className="w-full text-sm border-collapse min-w-[720px]">
                     <thead>
                       <tr className="text-left text-muted-foreground">
                         <th className="py-2 pr-4 font-medium">Runner</th>
+                        <th className="py-2 px-2 font-medium text-right">Delta vs self-hosted</th>
                         {exampleDurations.map((mins) => (
                           <th key={mins} className="py-2 px-2 font-medium text-right">{mins} min</th>
                         ))}
@@ -502,6 +503,7 @@ function App() {
                     <tbody className="divide-y">
                       <tr className="bg-muted/40">
                         <td className="py-3 pr-4 font-semibold text-foreground">Self-hosted (incl. fee)</td>
+                        <td className="py-3 px-2 text-right tabular-nums text-muted-foreground">—</td>
                         {exampleDurations.map((mins) => (
                           <td key={mins} className="py-3 px-2 text-right tabular-nums">{formatCurrency(selfHostedCostPerMinute * mins)}</td>
                         ))}
@@ -513,6 +515,23 @@ function App() {
                               <Badge variant="outline" className={getOSBadgeColor(runner.os)}>{runner.os}</Badge>
                               <span className="font-medium text-foreground">{runner.name}</span>
                             </div>
+                          </td>
+                          <td className="py-3 px-2 text-right tabular-nums">
+                            {(() => {
+                              const diff = runner.pricePerMinute - selfHostedCostPerMinute
+                              const isCheaper = diff < 0
+                              const isNeutral = Math.abs(diff) < 0.0005
+                              const color = isCheaper ? 'text-success' : isNeutral ? 'text-muted-foreground' : 'text-destructive'
+                              const icon = isCheaper ? '↓' : isNeutral ? '•' : '↑'
+                              const pct = (diff / selfHostedCostPerMinute) * 100
+                              return (
+                                <span className={`inline-flex items-center justify-end gap-2 ${color}`}>
+                                  <span className="font-semibold">{icon}</span>
+                                  <span className="tabular-nums">{formatCurrency(Math.abs(diff))}/min</span>
+                                  <span className="text-xs tabular-nums">({isCheaper ? '-' : '+'}{Math.abs(pct).toFixed(1)}%)</span>
+                                </span>
+                              )
+                            })()}
                           </td>
                           {exampleDurations.map((mins) => (
                             <td key={mins} className="py-3 px-2 text-right tabular-nums">{formatCurrency(runner.pricePerMinute * mins)}</td>
