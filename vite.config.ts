@@ -17,6 +17,7 @@ export default defineConfig({
     createIconImportProxy() as PluginOption,
     sparkPlugin() as PluginOption,
   ],
+  base: '/github-actions-cost/',
   resolve: {
     alias: {
       '@': resolve(projectRoot, 'src')
