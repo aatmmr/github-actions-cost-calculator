@@ -1,38 +1,71 @@
-import { useState } from 'react'
-import { Calculator, TrendUp, TrendDown, Check, Warning, ChartBar } from '@phosphor-icons/react'
+import { useMemo, useState } from 'react'
+import { Calculator, TrendUp, Check, Warning, ChartBar } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Checkbox } from '@/components/ui/checkbox'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 
 type RunnerType = {
+  id: string
   name: string
-  os: 'Ubuntu' | 'Windows' | 'macOS'
+  os: 'Linux' | 'Windows' | 'macOS'
   pricePerMinute: number
+  category: 'standard' | 'x64-large' | 'arm64-large' | 'gpu'
 }
 
 const GITHUB_HOSTED_RUNNERS: RunnerType[] = [
-  { name: 'Ubuntu (2-core)', os: 'Ubuntu', pricePerMinute: 0.008 },
-  { name: 'Ubuntu (4-core)', os: 'Ubuntu', pricePerMinute: 0.016 },
-  { name: 'Ubuntu (8-core)', os: 'Ubuntu', pricePerMinute: 0.032 },
-  { name: 'Ubuntu (16-core)', os: 'Ubuntu', pricePerMinute: 0.064 },
-  { name: 'Ubuntu (64-core)', os: 'Ubuntu', pricePerMinute: 0.256 },
-  { name: 'Windows (2-core)', os: 'Windows', pricePerMinute: 0.016 },
-  { name: 'Windows (4-core)', os: 'Windows', pricePerMinute: 0.032 },
-  { name: 'Windows (8-core)', os: 'Windows', pricePerMinute: 0.064 },
-  { name: 'Windows (16-core)', os: 'Windows', pricePerMinute: 0.128 },
-  { name: 'Windows (64-core)', os: 'Windows', pricePerMinute: 0.512 },
-  { name: 'macOS (3-core)', os: 'macOS', pricePerMinute: 0.08 },
-  { name: 'macOS (6-core M1)', os: 'macOS', pricePerMinute: 0.16 },
-  { name: 'macOS (12-core M1)', os: 'macOS', pricePerMinute: 0.32 },
+  // Standard GitHub-hosted runners (2026 pricing)
+  { id: 'linux_slim', name: 'Linux 1-core (slim)', os: 'Linux', pricePerMinute: 0.002, category: 'standard' },
+  { id: 'linux', name: 'Linux 2-core', os: 'Linux', pricePerMinute: 0.006, category: 'standard' },
+  { id: 'windows', name: 'Windows 2-core', os: 'Windows', pricePerMinute: 0.010, category: 'standard' },
+  { id: 'macos', name: 'macOS 3-core/4-core', os: 'macOS', pricePerMinute: 0.062, category: 'standard' },
+
+  // x64-powered larger runners (2026 pricing)
+  { id: 'linux_2_core_advanced', name: 'Linux 2-core (advanced)', os: 'Linux', pricePerMinute: 0.006, category: 'x64-large' },
+  { id: 'linux_4_core', name: 'Linux 4-core', os: 'Linux', pricePerMinute: 0.012, category: 'x64-large' },
+  { id: 'linux_8_core', name: 'Linux 8-core', os: 'Linux', pricePerMinute: 0.022, category: 'x64-large' },
+  { id: 'linux_16_core', name: 'Linux 16-core', os: 'Linux', pricePerMinute: 0.042, category: 'x64-large' },
+  { id: 'linux_32_core', name: 'Linux 32-core', os: 'Linux', pricePerMinute: 0.082, category: 'x64-large' },
+  { id: 'linux_64_core', name: 'Linux 64-core', os: 'Linux', pricePerMinute: 0.162, category: 'x64-large' },
+  { id: 'linux_96_core', name: 'Linux 96-core', os: 'Linux', pricePerMinute: 0.252, category: 'x64-large' },
+  { id: 'windows_4_core', name: 'Windows 4-core', os: 'Windows', pricePerMinute: 0.022, category: 'x64-large' },
+  { id: 'windows_8_core', name: 'Windows 8-core', os: 'Windows', pricePerMinute: 0.042, category: 'x64-large' },
+  { id: 'windows_16_core', name: 'Windows 16-core', os: 'Windows', pricePerMinute: 0.082, category: 'x64-large' },
+  { id: 'windows_32_core', name: 'Windows 32-core', os: 'Windows', pricePerMinute: 0.162, category: 'x64-large' },
+  { id: 'windows_64_core', name: 'Windows 64-core', os: 'Windows', pricePerMinute: 0.322, category: 'x64-large' },
+  { id: 'windows_96_core', name: 'Windows 96-core', os: 'Windows', pricePerMinute: 0.552, category: 'x64-large' },
+  { id: 'macos_l', name: 'macOS 12-core', os: 'macOS', pricePerMinute: 0.077, category: 'x64-large' },
+
+  // arm64-powered larger runners (2026 pricing)
+  { id: 'linux_2_core_arm', name: 'Linux 2-core (ARM)', os: 'Linux', pricePerMinute: 0.005, category: 'arm64-large' },
+  { id: 'linux_4_core_arm', name: 'Linux 4-core (ARM)', os: 'Linux', pricePerMinute: 0.008, category: 'arm64-large' },
+  { id: 'linux_8_core_arm', name: 'Linux 8-core (ARM)', os: 'Linux', pricePerMinute: 0.014, category: 'arm64-large' },
+  { id: 'linux_16_core_arm', name: 'Linux 16-core (ARM)', os: 'Linux', pricePerMinute: 0.026, category: 'arm64-large' },
+  { id: 'linux_32_core_arm', name: 'Linux 32-core (ARM)', os: 'Linux', pricePerMinute: 0.050, category: 'arm64-large' },
+  { id: 'linux_64_core_arm', name: 'Linux 64-core (ARM)', os: 'Linux', pricePerMinute: 0.098, category: 'arm64-large' },
+  { id: 'windows_2_core_arm', name: 'Windows 2-core (ARM)', os: 'Windows', pricePerMinute: 0.008, category: 'arm64-large' },
+  { id: 'windows_4_core_arm', name: 'Windows 4-core (ARM)', os: 'Windows', pricePerMinute: 0.014, category: 'arm64-large' },
+  { id: 'windows_8_core_arm', name: 'Windows 8-core (ARM)', os: 'Windows', pricePerMinute: 0.026, category: 'arm64-large' },
+  { id: 'windows_16_core_arm', name: 'Windows 16-core (ARM)', os: 'Windows', pricePerMinute: 0.050, category: 'arm64-large' },
+  { id: 'windows_32_core_arm', name: 'Windows 32-core (ARM)', os: 'Windows', pricePerMinute: 0.098, category: 'arm64-large' },
+  { id: 'windows_64_core_arm', name: 'Windows 64-core (ARM)', os: 'Windows', pricePerMinute: 0.194, category: 'arm64-large' },
+  { id: 'macos_xl', name: 'macOS 5-core (M2 Pro)', os: 'macOS', pricePerMinute: 0.102, category: 'arm64-large' },
+
+  // GPU-powered runners (2026 pricing)
+  { id: 'linux_4_core_gpu', name: 'Linux 4-core (GPU)', os: 'Linux', pricePerMinute: 0.052, category: 'gpu' },
+  { id: 'windows_4_core_gpu', name: 'Windows 4-core (GPU)', os: 'Windows', pricePerMinute: 0.102, category: 'gpu' },
 ]
 
 function App() {
   const [costInput, setCostInput] = useState('')
   const [timeUnit, setTimeUnit] = useState<'minute' | 'hour'>('hour')
+  const [selectedRunners, setSelectedRunners] = useState<string[]>(
+    () => GITHUB_HOSTED_RUNNERS.map((runner) => runner.id)
+  )
 
   const selfHostedCostPerMinute = costInput
     ? timeUnit === 'minute'
@@ -57,7 +90,7 @@ function App() {
 
   const getOSBadgeColor = (os: string) => {
     switch (os) {
-      case 'Ubuntu':
+      case 'Linux':
         return 'bg-orange-100 text-orange-800 border-orange-300'
       case 'Windows':
         return 'bg-blue-100 text-blue-800 border-blue-300'
@@ -70,7 +103,7 @@ function App() {
 
   const getOSChartColor = (os: string) => {
     switch (os) {
-      case 'Ubuntu':
+      case 'Linux':
         return 'oklch(0.70 0.15 40)'
       case 'Windows':
         return 'oklch(0.60 0.20 240)'
@@ -81,13 +114,20 @@ function App() {
     }
   }
 
-  const chartData = selfHostedCostPerMinute !== null ? GITHUB_HOSTED_RUNNERS.map(runner => ({
-    name: runner.name,
-    os: runner.os,
-    'GitHub-hosted': runner.pricePerMinute,
-    'Self-hosted': selfHostedCostPerMinute,
-    difference: selfHostedCostPerMinute - runner.pricePerMinute,
-  })) : []
+  const filteredRunners = useMemo(
+    () => GITHUB_HOSTED_RUNNERS.filter((runner) => selectedRunners.includes(runner.id)),
+    [selectedRunners]
+  )
+
+  const chartData = selfHostedCostPerMinute !== null
+    ? filteredRunners.map((runner) => ({
+        name: runner.name,
+        os: runner.os,
+        'GitHub-hosted': runner.pricePerMinute,
+        'Self-hosted': selfHostedCostPerMinute,
+        difference: selfHostedCostPerMinute - runner.pricePerMinute,
+      }))
+    : []
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -198,6 +238,65 @@ function App() {
           </CardContent>
         </Card>
 
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl">Select GitHub-hosted runners</CardTitle>
+            <CardDescription>
+              Toggle which runners appear in the chart and comparison (2026 pricing)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {['Linux', 'Windows', 'macOS'].map((os) => {
+              const runnersForOS = GITHUB_HOSTED_RUNNERS.filter((runner) => runner.os === os)
+
+              return (
+                <div key={os} className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={getOSBadgeColor(os)}>
+                        {os}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">{runnersForOS.length} runners</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>Toggle to include in comparison</span>
+                    </div>
+                  </div>
+                  <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                    {runnersForOS.map((runner) => {
+                      const checked = selectedRunners.includes(runner.id)
+                      return (
+                        <label
+                          key={runner.id}
+                          className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2 hover:border-primary/50 hover:shadow-sm cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(value) => {
+                              setSelectedRunners((prev) => {
+                                const isChecked = value === true
+                                if (isChecked) {
+                                  return prev.includes(runner.id) ? prev : [...prev, runner.id]
+                                }
+                                return prev.filter((id) => id !== runner.id)
+                              })
+                            }}
+                            aria-label={`Toggle ${runner.name}`}
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-medium leading-tight">{runner.name}</span>
+                            <span className="text-xs text-muted-foreground">{formatCurrency(runner.pricePerMinute)}/min</span>
+                          </div>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </CardContent>
+        </Card>
+
         {selfHostedCostPerMinute !== null && (
           <Card className="shadow-lg">
             <CardHeader>
@@ -244,7 +343,7 @@ function App() {
               <div className="flex justify-center gap-6 mt-6 flex-wrap">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.70 0.15 40)' }} />
-                  <span className="text-sm text-muted-foreground">Ubuntu</span>
+                  <span className="text-sm text-muted-foreground">Linux</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.60 0.20 240)' }} />
@@ -268,9 +367,9 @@ function App() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {GITHUB_HOSTED_RUNNERS.map((runner, index) => {
+              {filteredRunners.map((runner, index) => {
                 const showSeparator =
-                  index > 0 && runner.os !== GITHUB_HOSTED_RUNNERS[index - 1].os
+                  index > 0 && runner.os !== filteredRunners[index - 1].os
 
                 return (
                   <div key={runner.name}>
@@ -357,6 +456,12 @@ function App() {
             {selfHostedCostPerMinute === null && (
               <div className="text-center py-8 text-muted-foreground">
                 <p>Enter your self-hosted infrastructure cost above to see the comparison</p>
+              </div>
+            )}
+
+            {selfHostedCostPerMinute !== null && filteredRunners.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Select at least one GitHub-hosted runner to compare.</p>
               </div>
             )}
           </CardContent>
