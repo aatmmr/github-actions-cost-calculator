@@ -63,18 +63,33 @@ const GITHUB_HOSTED_RUNNERS: RunnerType[] = [
 ]
 
 const PLATFORM_FEE_PER_MINUTE = 0.002 // GitHub Actions cloud platform fee for self-hosted runners from Mar 1, 2026
+const MINUTES_IN_WEEK = 7 * 24 * 60
+const MINUTES_IN_MONTH = 30 * 24 * 60 // simplified 30-day month for comparison
 
 function App() {
   const [costInput, setCostInput] = useState('')
-  const [timeUnit, setTimeUnit] = useState<'minute' | 'hour'>('hour')
+  const [timeUnit, setTimeUnit] = useState<'minute' | 'hour' | 'week' | 'month'>('hour')
   const [selectedRunners, setSelectedRunners] = useState<string[]>(
     () => GITHUB_HOSTED_RUNNERS.map((runner) => runner.id)
   )
 
-  const baseSelfHostedCostPerMinute = costInput
-    ? timeUnit === 'minute'
-      ? parseFloat(costInput)
-      : parseFloat(costInput) / 60
+  const parsedInput = costInput ? parseFloat(costInput) : null
+
+  const baseSelfHostedCostPerMinute = parsedInput !== null
+    ? (() => {
+        switch (timeUnit) {
+          case 'minute':
+            return parsedInput
+          case 'hour':
+            return parsedInput / 60
+          case 'week':
+            return parsedInput / MINUTES_IN_WEEK
+          case 'month':
+            return parsedInput / MINUTES_IN_MONTH
+          default:
+            return parsedInput
+        }
+      })()
     : null
 
   const selfHostedCostPerMinute =
@@ -206,7 +221,7 @@ function App() {
                   id="time-unit"
                   value={timeUnit}
                   onValueChange={(value) => setTimeUnit(value as 'minute' | 'hour')}
-                  className="flex gap-4"
+                  className="flex gap-4 flex-wrap"
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="minute" id="minute" />
@@ -218,6 +233,18 @@ function App() {
                     <RadioGroupItem value="hour" id="hour" />
                     <Label htmlFor="hour" className="cursor-pointer font-normal">
                       Per Hour
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="week" id="week" />
+                    <Label htmlFor="week" className="cursor-pointer font-normal">
+                      Per Week
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="month" id="month" />
+                    <Label htmlFor="month" className="cursor-pointer font-normal">
+                      Per Month
                     </Label>
                   </div>
                 </RadioGroup>
@@ -236,7 +263,15 @@ function App() {
                     type="number"
                     step="0.0001"
                     min="0"
-                    placeholder={timeUnit === 'minute' ? '0.0100' : '0.6000'}
+                    placeholder={
+                      timeUnit === 'minute'
+                        ? '0.010'
+                        : timeUnit === 'hour'
+                          ? '0.600'
+                          : timeUnit === 'week'
+                            ? '10.000'
+                            : '50.000'
+                    }
                     value={costInput}
                     onChange={(e) => setCostInput(e.target.value)}
                     className="pl-7 text-lg h-12"
