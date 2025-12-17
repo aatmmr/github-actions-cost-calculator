@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Button } from '@/components/ui/button'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 
 type RunnerType = {
@@ -251,10 +252,30 @@ function App() {
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl">Select GitHub-hosted runners</CardTitle>
-            <CardDescription>
-              Toggle which runners appear in the chart and comparison (2026 pricing)
-            </CardDescription>
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle className="text-2xl">Select GitHub-hosted runners</CardTitle>
+                <CardDescription>
+                  Toggle which runners appear in the chart and comparison (2026 pricing)
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedRunners(GITHUB_HOSTED_RUNNERS.map((r) => r.id))}
+                >
+                  Select all
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedRunners([])}
+                >
+                  Deselect all
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {['Linux', 'Windows', 'macOS'].map((os) => {
@@ -262,7 +283,7 @@ function App() {
 
               return (
                 <div key={os} className="space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className={getOSBadgeColor(os)}>
                         {os}
@@ -271,6 +292,28 @@ function App() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span>Toggle to include in comparison</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setSelectedRunners((prev) => {
+                            const withOs = new Set(prev)
+                            runnersForOS.forEach((r) => withOs.add(r.id))
+                            return Array.from(withOs)
+                          })
+                        }
+                      >
+                        Select all {os}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setSelectedRunners((prev) => prev.filter((id) => !runnersForOS.some((r) => r.id === id)))
+                        }
+                      >
+                        Deselect all {os}
+                      </Button>
                     </div>
                   </div>
                   <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
