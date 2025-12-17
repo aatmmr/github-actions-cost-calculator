@@ -1,23 +1,27 @@
-# ✨ Welcome to Your Spark Template!
-You've just launched your brand-new Spark Template Codespace — everything’s fired up and ready for you to explore, build, and create with Spark!
 
-This template is your blank canvas. It comes with a minimal setup to help you get started quickly with Spark development.
+# GitHub Actions Cost Dashboard
 
-🚀 What's Inside?
-- A clean, minimal Spark environment
-- Pre-configured for local development
-- Ready to scale with your ideas
-  
-🧠 What Can You Do?
+This project provides a dashboard to visualize and analyze the cost of your GitHub Actions usage. It helps you track workflow runs, estimate costs, and optimize your CI/CD spending.
 
-Right now, this is just a starting point — the perfect place to begin building and testing your Spark applications.
+## Features
+- Visualize GitHub Actions usage and costs
+- Filter and analyze workflow runs
+- Modern UI built with React and Tailwind CSS
 
-🧹 Just Exploring?
-No problem! If you were just checking things out and don’t need to keep this code:
+## Getting Started
 
-- Simply delete your Spark.
-- Everything will be cleaned up — no traces left behind.
+1. **Install dependencies:**
+	```sh
+	npm install
+	```
 
-📄 License For Spark Template Resources 
+2. **Start the development server:**
+	```sh
+	npm run dev
+	```
 
-The Spark Template files and resources from GitHub are licensed under the terms of the MIT license, Copyright GitHub, Inc.
+3. Open [http://localhost:5173](http://localhost:5173) in your browser to view the dashboard.
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
