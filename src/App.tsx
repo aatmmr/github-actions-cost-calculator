@@ -137,6 +137,8 @@ function App() {
       }))
     : []
 
+  const exampleDurations = [1, 10, 15, 20, 30]
+
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload
@@ -411,6 +413,53 @@ function App() {
             </CardContent>
           </Card>
         )}
+
+          {selfHostedCostPerMinute !== null && (
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl">Example workflow costs</CardTitle>
+                <CardDescription>
+                  Estimated cost for selected runners at common job durations (includes platform fee for self-hosted)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse min-w-[640px]">
+                  <thead>
+                    <tr className="text-left text-muted-foreground">
+                      <th className="py-2 pr-4 font-medium">Runner</th>
+                      {exampleDurations.map((mins) => (
+                        <th key={mins} className="py-2 px-2 font-medium text-right">{mins} min</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    <tr className="bg-muted/40">
+                      <td className="py-3 pr-4 font-semibold text-foreground">Self-hosted (incl. fee)</td>
+                      {exampleDurations.map((mins) => (
+                        <td key={mins} className="py-3 px-2 text-right tabular-nums">{formatCurrency(selfHostedCostPerMinute * mins)}</td>
+                      ))}
+                    </tr>
+                    {filteredRunners.map((runner) => (
+                      <tr key={runner.id}>
+                        <td className="py-3 pr-4">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={getOSBadgeColor(runner.os)}>{runner.os}</Badge>
+                            <span className="font-medium text-foreground">{runner.name}</span>
+                          </div>
+                        </td>
+                        {exampleDurations.map((mins) => (
+                          <td key={mins} className="py-3 px-2 text-right tabular-nums">{formatCurrency(runner.pricePerMinute * mins)}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {filteredRunners.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center mt-4">Select at least one GitHub-hosted runner to see examples.</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
         <Card className="shadow-lg">
           <CardHeader>
