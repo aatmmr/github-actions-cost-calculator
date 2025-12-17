@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank } from '@phosphor-icons/react'
+import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank, ArrowRight } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -254,39 +254,52 @@ function App() {
                 </RadioGroup>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="cost-input" className="text-base font-medium">
-                  Infrastructure Cost (USD)
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    $
-                  </span>
-                  <Input
-                    id="cost-input"
-                    type="number"
-                    step="0.0001"
-                    min="0"
-                    placeholder={
-                      timeUnit === 'minute'
-                        ? '0.010'
-                        : timeUnit === 'hour'
-                          ? '0.600'
-                          : timeUnit === 'week'
-                            ? '10.000'
-                            : '50.000'
-                    }
-                    value={costInput}
-                    onChange={(e) => setCostInput(e.target.value)}
-                    className="pl-7 text-lg h-12"
-                  />
-                </div>
-                {selfHostedCostPerMinute !== null && (
-                  <p className="text-sm text-foreground font-medium">
-                    Total: {formatCurrency(selfHostedCostPerMinute)}/min
-                    <span className="text-muted-foreground font-normal"> ({formatCurrency(baseSelfHostedCostPerMinute ?? 0)} infra + {formatCurrency(PLATFORM_FEE_PER_MINUTE)} platform fee)</span>
+              <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] items-center">
+                <div className="space-y-2">
+                  <Label htmlFor="cost-input" className="text-base font-medium">
+                    Infrastructure Cost (USD)
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      $
+                    </span>
+                    <Input
+                      id="cost-input"
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      placeholder={
+                        timeUnit === 'minute'
+                          ? '0.010'
+                          : timeUnit === 'hour'
+                            ? '0.600'
+                            : timeUnit === 'week'
+                              ? '10.000'
+                              : '50.000'
+                      }
+                      value={costInput}
+                      onChange={(e) => setCostInput(e.target.value)}
+                      className="pl-7 text-lg h-12"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Add the cost for a single runner for the selected time unit.
                   </p>
-                )}
+                </div>
+
+                <div className="hidden md:flex items-center justify-center text-muted-foreground">
+                  <ArrowRight size={28} weight="duotone" className="text-primary" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-base font-medium">Calculated total (/min)</Label>
+                  <div className="flex h-12 items-center rounded-md border bg-muted/50 px-3 text-lg font-semibold text-foreground">
+                    {selfHostedCostPerMinute !== null ? formatCurrency(selfHostedCostPerMinute) : '—'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formatCurrency(baseSelfHostedCostPerMinute ?? 0)} infra + {formatCurrency(PLATFORM_FEE_PER_MINUTE)} platform fee
+                  </p>
+                </div>
               </div>
             </div>
           </CardContent>
