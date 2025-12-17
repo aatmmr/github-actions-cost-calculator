@@ -60,6 +60,8 @@ const GITHUB_HOSTED_RUNNERS: RunnerType[] = [
   { id: 'windows_4_core_gpu', name: 'Windows 4-core (GPU)', os: 'Windows', pricePerMinute: 0.102, category: 'gpu' },
 ]
 
+const PLATFORM_FEE_PER_MINUTE = 0.002 // GitHub Actions cloud platform fee for self-hosted runners from Mar 1, 2026
+
 function App() {
   const [costInput, setCostInput] = useState('')
   const [timeUnit, setTimeUnit] = useState<'minute' | 'hour'>('hour')
@@ -67,11 +69,16 @@ function App() {
     () => GITHUB_HOSTED_RUNNERS.map((runner) => runner.id)
   )
 
-  const selfHostedCostPerMinute = costInput
+  const baseSelfHostedCostPerMinute = costInput
     ? timeUnit === 'minute'
       ? parseFloat(costInput)
       : parseFloat(costInput) / 60
     : null
+
+  const selfHostedCostPerMinute =
+    baseSelfHostedCostPerMinute !== null
+      ? baseSelfHostedCostPerMinute + PLATFORM_FEE_PER_MINUTE
+      : null
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -145,6 +152,9 @@ function App() {
             </p>
             <p className="text-muted-foreground">
               Self-hosted: <span className="font-medium text-foreground">{formatCurrency(data['Self-hosted'])}/min</span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Includes {formatCurrency(baseSelfHostedCostPerMinute ?? 0)} infra + {formatCurrency(PLATFORM_FEE_PER_MINUTE)} fee
             </p>
             <Separator className="my-2" />
             <p className={isSavings ? 'text-success font-semibold' : 'text-destructive font-semibold'}>
@@ -229,8 +239,9 @@ function App() {
                   />
                 </div>
                 {selfHostedCostPerMinute !== null && (
-                  <p className="text-sm text-muted-foreground">
-                    Cost per minute: {formatCurrency(selfHostedCostPerMinute)}
+                  <p className="text-sm text-foreground font-medium">
+                    Total: {formatCurrency(selfHostedCostPerMinute)}/min
+                    <span className="text-muted-foreground font-normal"> ({formatCurrency(baseSelfHostedCostPerMinute ?? 0)} infra + {formatCurrency(PLATFORM_FEE_PER_MINUTE)} platform fee)</span>
                   </p>
                 )}
               </div>
@@ -394,10 +405,13 @@ function App() {
                         <div className="flex items-center gap-4">
                           <div className="text-right">
                             <p className="text-sm text-muted-foreground">
-                              Self-hosted cost
+                              Self-hosted cost (incl. platform fee)
                             </p>
                             <p className="font-semibold text-lg tabular-nums">
                               {formatCurrency(selfHostedCostPerMinute)}/min
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatCurrency(baseSelfHostedCostPerMinute ?? 0)} infra + {formatCurrency(PLATFORM_FEE_PER_MINUTE)} fee
                             </p>
                           </div>
                           <div className="w-px h-12 bg-border" />
@@ -492,6 +506,10 @@ function App() {
               Self-hosted costs should include infrastructure expenses (compute, storage,
               networking) divided by expected usage to determine your per-minute or per-hour
               rate.
+            </p>
+            <p>
+              A $0.002/min GitHub Actions platform fee (effective Mar 1, 2026) is automatically
+              added to self-hosted costs in this calculator.
             </p>
           </CardContent>
         </Card>
