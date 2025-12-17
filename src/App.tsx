@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight } from '@phosphor-icons/react'
+import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -225,25 +225,29 @@ function App() {
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="minute" id="minute" />
-                    <Label htmlFor="minute" className="cursor-pointer font-normal">
+                    <Label htmlFor="minute" className="cursor-pointer font-normal inline-flex items-center gap-2">
+                      <Clock size={16} weight="duotone" className="text-muted-foreground" />
                       Per Minute
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="hour" id="hour" />
-                    <Label htmlFor="hour" className="cursor-pointer font-normal">
+                    <Label htmlFor="hour" className="cursor-pointer font-normal inline-flex items-center gap-2">
+                      <Hourglass size={16} weight="duotone" className="text-muted-foreground" />
                       Per Hour
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="week" id="week" />
-                    <Label htmlFor="week" className="cursor-pointer font-normal">
+                    <Label htmlFor="week" className="cursor-pointer font-normal inline-flex items-center gap-2">
+                      <CalendarCheck size={16} weight="duotone" className="text-muted-foreground" />
                       Per Week
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="month" id="month" />
-                    <Label htmlFor="month" className="cursor-pointer font-normal">
+                    <Label htmlFor="month" className="cursor-pointer font-normal inline-flex items-center gap-2">
+                      <CalendarBlank size={16} weight="duotone" className="text-muted-foreground" />
                       Per Month
                     </Label>
                   </div>
