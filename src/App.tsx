@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Calculator, TrendUp, Check, Warning, ChartBar } from '@phosphor-icons/react'
+import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 
 type RunnerType = {
@@ -252,326 +253,367 @@ function App() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <CardTitle className="text-2xl">Select GitHub-hosted runners</CardTitle>
-                <CardDescription>
-                  Toggle which runners appear in the chart and comparison (2026 pricing)
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedRunners(GITHUB_HOSTED_RUNNERS.map((r) => r.id))}
-                >
-                  Select all
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedRunners([])}
-                >
-                  Deselect all
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {['Linux', 'Windows', 'macOS'].map((os) => {
-              const runnersForOS = GITHUB_HOSTED_RUNNERS.filter((runner) => runner.os === os)
+        <Tabs defaultValue="select" className="space-y-6">
+          <TabsList className="w-full grid grid-cols-2 md:grid-cols-4">
+            <TabsTrigger value="select">
+              <ListChecks weight="duotone" />
+              Select Runners
+            </TabsTrigger>
+            <TabsTrigger value="visual">
+              <SquaresFour weight="duotone" />
+              Visual Comparison
+            </TabsTrigger>
+            <TabsTrigger value="examples">
+              <Coins weight="duotone" />
+              Example Costs
+            </TabsTrigger>
+            <TabsTrigger value="comparison">
+              <ArrowsLeftRight weight="duotone" />
+              Cost Comparison
+            </TabsTrigger>
+          </TabsList>
 
-              return (
-                <div key={os} className="space-y-3">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={getOSBadgeColor(os)}>
-                        {os}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">{runnersForOS.length} runners</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>Toggle to include in comparison</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setSelectedRunners((prev) => {
-                            const withOs = new Set(prev)
-                            runnersForOS.forEach((r) => withOs.add(r.id))
-                            return Array.from(withOs)
-                          })
-                        }
-                      >
-                        Select all {os}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setSelectedRunners((prev) => prev.filter((id) => !runnersForOS.some((r) => r.id === id)))
-                        }
-                      >
-                        Deselect all {os}
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                    {runnersForOS.map((runner) => {
-                      const checked = selectedRunners.includes(runner.id)
-                      return (
-                        <label
-                          key={runner.id}
-                          className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2 hover:border-primary/50 hover:shadow-sm cursor-pointer"
-                        >
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={(value) => {
-                              setSelectedRunners((prev) => {
-                                const isChecked = value === true
-                                if (isChecked) {
-                                  return prev.includes(runner.id) ? prev : [...prev, runner.id]
-                                }
-                                return prev.filter((id) => id !== runner.id)
-                              })
-                            }}
-                            aria-label={`Toggle ${runner.name}`}
-                          />
-                          <div className="flex flex-col">
-                            <span className="font-medium leading-tight">{runner.name}</span>
-                            <span className="text-xs text-muted-foreground">{formatCurrency(runner.pricePerMinute)}/min</span>
-                          </div>
-                        </label>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })}
-          </CardContent>
-        </Card>
-
-        {selfHostedCostPerMinute !== null && (
-          <Card className="shadow-lg">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <ChartBar size={24} weight="duotone" className="text-primary" />
-                <CardTitle className="text-2xl">Visual Comparison</CardTitle>
-              </div>
-              <CardDescription>
-                Cost per minute comparison across all runner types
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={500}>
-                <BarChart
-                  data={chartData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.88 0.01 250)" opacity={0.3} />
-                  <XAxis
-                    dataKey="name"
-                    angle={-45}
-                    textAnchor="end"
-                    height={100}
-                    tick={{ fill: 'oklch(0.45 0.02 250)', fontSize: 12 }}
-                  />
-                  <YAxis
-                    label={{ value: 'Cost per minute (USD)', angle: -90, position: 'insideLeft', style: { fill: 'oklch(0.45 0.02 250)' } }}
-                    tick={{ fill: 'oklch(0.45 0.02 250)', fontSize: 12 }}
-                    tickFormatter={(value) => `$${value.toFixed(3)}`}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend 
-                    wrapperStyle={{ paddingTop: '20px' }}
-                    iconType="square"
-                  />
-                  <Bar dataKey="GitHub-hosted" name="GitHub-hosted" radius={[8, 8, 0, 0]}>
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getOSChartColor(entry.os)} />
-                    ))}
-                  </Bar>
-                  <Bar dataKey="Self-hosted" name="Self-hosted" fill="oklch(0.70 0.15 210)" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-              <div className="flex justify-center gap-6 mt-6 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.70 0.15 40)' }} />
-                  <span className="text-sm text-muted-foreground">Linux</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.60 0.20 240)' }} />
-                  <span className="text-sm text-muted-foreground">Windows</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.50 0.05 250)' }} />
-                  <span className="text-sm text-muted-foreground">macOS</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-          {selfHostedCostPerMinute !== null && (
+          <TabsContent value="select">
             <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle className="text-2xl">Example workflow costs</CardTitle>
-                <CardDescription>
-                  Estimated cost for selected runners at common job durations (includes platform fee for self-hosted)
-                </CardDescription>
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <CardTitle className="text-2xl">Select GitHub-hosted runners</CardTitle>
+                    <CardDescription>
+                      Toggle which runners appear in the chart and comparison (2026 pricing)
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedRunners(GITHUB_HOSTED_RUNNERS.map((r) => r.id))}
+                    >
+                      Select all
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedRunners([])}
+                    >
+                      Deselect all
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse min-w-[640px]">
-                  <thead>
-                    <tr className="text-left text-muted-foreground">
-                      <th className="py-2 pr-4 font-medium">Runner</th>
-                      {exampleDurations.map((mins) => (
-                        <th key={mins} className="py-2 px-2 font-medium text-right">{mins} min</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    <tr className="bg-muted/40">
-                      <td className="py-3 pr-4 font-semibold text-foreground">Self-hosted (incl. fee)</td>
-                      {exampleDurations.map((mins) => (
-                        <td key={mins} className="py-3 px-2 text-right tabular-nums">{formatCurrency(selfHostedCostPerMinute * mins)}</td>
-                      ))}
-                    </tr>
-                    {filteredRunners.map((runner) => (
-                      <tr key={runner.id}>
-                        <td className="py-3 pr-4">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className={getOSBadgeColor(runner.os)}>{runner.os}</Badge>
-                            <span className="font-medium text-foreground">{runner.name}</span>
-                          </div>
-                        </td>
+              <CardContent className="space-y-4">
+                {['Linux', 'Windows', 'macOS'].map((os) => {
+                  const runnersForOS = GITHUB_HOSTED_RUNNERS.filter((runner) => runner.os === os)
+
+                  return (
+                    <div key={os} className="space-y-3">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={getOSBadgeColor(os)}>
+                            {os}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">{runnersForOS.length} runners</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>Toggle to include in comparison</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setSelectedRunners((prev) => {
+                                const withOs = new Set(prev)
+                                runnersForOS.forEach((r) => withOs.add(r.id))
+                                return Array.from(withOs)
+                              })
+                            }
+                          >
+                            Select all {os}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setSelectedRunners((prev) => prev.filter((id) => !runnersForOS.some((r) => r.id === id)))
+                            }
+                          >
+                            Deselect all {os}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                        {runnersForOS.map((runner) => {
+                          const checked = selectedRunners.includes(runner.id)
+                          return (
+                            <label
+                              key={runner.id}
+                              className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2 hover:border-primary/50 hover:shadow-sm cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={(value) => {
+                                  setSelectedRunners((prev) => {
+                                    const isChecked = value === true
+                                    if (isChecked) {
+                                      return prev.includes(runner.id) ? prev : [...prev, runner.id]
+                                    }
+                                    return prev.filter((id) => id !== runner.id)
+                                  })
+                                }}
+                                aria-label={`Toggle ${runner.name}`}
+                              />
+                              <div className="flex flex-col">
+                                <span className="font-medium leading-tight">{runner.name}</span>
+                                <span className="text-xs text-muted-foreground">{formatCurrency(runner.pricePerMinute)}/min</span>
+                              </div>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="visual">
+            {selfHostedCostPerMinute !== null ? (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <ChartBar size={24} weight="duotone" className="text-primary" />
+                    <CardTitle className="text-2xl">Visual Comparison</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Cost per minute comparison across all runner types
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={500}>
+                    <BarChart
+                      data={chartData}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.88 0.01 250)" opacity={0.3} />
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                        tick={{ fill: 'oklch(0.45 0.02 250)', fontSize: 12 }}
+                      />
+                      <YAxis
+                        label={{ value: 'Cost per minute (USD)', angle: -90, position: 'insideLeft', style: { fill: 'oklch(0.45 0.02 250)' } }}
+                        tick={{ fill: 'oklch(0.45 0.02 250)', fontSize: 12 }}
+                        tickFormatter={(value) => `$${value.toFixed(3)}`}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '20px' }}
+                        iconType="square"
+                      />
+                      <Bar dataKey="GitHub-hosted" name="GitHub-hosted" radius={[8, 8, 0, 0]}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={getOSChartColor(entry.os)} />
+                        ))}
+                      </Bar>
+                      <Bar dataKey="Self-hosted" name="Self-hosted" fill="oklch(0.70 0.15 210)" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <div className="flex justify-center gap-6 mt-6 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.70 0.15 40)' }} />
+                      <span className="text-sm text-muted-foreground">Linux</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.60 0.20 240)' }} />
+                      <span className="text-sm text-muted-foreground">Windows</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.50 0.05 250)' }} />
+                      <span className="text-sm text-muted-foreground">macOS</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg">
+                <CardContent className="py-10 text-center text-muted-foreground">
+                  Enter your self-hosted cost to see the visual comparison.
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="examples">
+            {selfHostedCostPerMinute !== null ? (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-2xl">Example workflow costs</CardTitle>
+                  <CardDescription>
+                    Estimated cost for selected runners at common job durations (includes platform fee for self-hosted)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse min-w-[640px]">
+                    <thead>
+                      <tr className="text-left text-muted-foreground">
+                        <th className="py-2 pr-4 font-medium">Runner</th>
                         {exampleDurations.map((mins) => (
-                          <td key={mins} className="py-3 px-2 text-right tabular-nums">{formatCurrency(runner.pricePerMinute * mins)}</td>
+                          <th key={mins} className="py-2 px-2 font-medium text-right">{mins} min</th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {filteredRunners.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center mt-4">Select at least one GitHub-hosted runner to see examples.</p>
+                    </thead>
+                    <tbody className="divide-y">
+                      <tr className="bg-muted/40">
+                        <td className="py-3 pr-4 font-semibold text-foreground">Self-hosted (incl. fee)</td>
+                        {exampleDurations.map((mins) => (
+                          <td key={mins} className="py-3 px-2 text-right tabular-nums">{formatCurrency(selfHostedCostPerMinute * mins)}</td>
+                        ))}
+                      </tr>
+                      {filteredRunners.map((runner) => (
+                        <tr key={runner.id}>
+                          <td className="py-3 pr-4">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={getOSBadgeColor(runner.os)}>{runner.os}</Badge>
+                              <span className="font-medium text-foreground">{runner.name}</span>
+                            </div>
+                          </td>
+                          {exampleDurations.map((mins) => (
+                            <td key={mins} className="py-3 px-2 text-right tabular-nums">{formatCurrency(runner.pricePerMinute * mins)}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {filteredRunners.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center mt-4">Select at least one GitHub-hosted runner to see examples.</p>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg">
+                <CardContent className="py-10 text-center text-muted-foreground">
+                  Enter your self-hosted cost to see example workflow costs.
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="comparison">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl">Cost Comparison</CardTitle>
+                <CardDescription>
+                  GitHub-hosted runner pricing for 2026 vs. your self-hosted costs
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {filteredRunners.map((runner, index) => {
+                    const showSeparator =
+                      index > 0 && runner.os !== filteredRunners[index - 1].os
+
+                    return (
+                      <div key={runner.name}>
+                        {showSeparator && <Separator className="my-6" />}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow">
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant="outline"
+                                className={getOSBadgeColor(runner.os)}
+                              >
+                                {runner.os}
+                              </Badge>
+                              <h3 className="font-semibold text-lg">{runner.name}</h3>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              GitHub-hosted: {formatCurrency(runner.pricePerMinute)}/min
+                            </p>
+                          </div>
+
+                          {selfHostedCostPerMinute !== null && (
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <p className="text-sm text-muted-foreground">
+                                  Self-hosted cost (incl. platform fee)
+                                </p>
+                                <p className="font-semibold text-lg tabular-nums">
+                                  {formatCurrency(selfHostedCostPerMinute)}/min
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatCurrency(baseSelfHostedCostPerMinute ?? 0)} infra + {formatCurrency(PLATFORM_FEE_PER_MINUTE)} fee
+                                </p>
+                              </div>
+                              <div className="w-px h-12 bg-border" />
+                              <div className="text-right min-w-[140px]">
+                                {(() => {
+                                  const { difference, percentageDiff } =
+                                    calculateDifference(
+                                      runner.pricePerMinute,
+                                      selfHostedCostPerMinute
+                                    )
+                                  const isSavings = difference < 0
+                                  const isNeutral = Math.abs(percentageDiff) < 5
+
+                                  return (
+                                    <div
+                                      className={`space-y-1 ${
+                                        isSavings
+                                          ? 'text-success'
+                                          : isNeutral
+                                            ? 'text-warning'
+                                            : 'text-destructive'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-end gap-1">
+                                        {isSavings ? (
+                                          <Check size={18} weight="bold" />
+                                        ) : isNeutral ? (
+                                          <Warning size={18} weight="bold" />
+                                        ) : (
+                                          <TrendUp size={18} weight="bold" />
+                                        )}
+                                        <p className="font-bold text-lg tabular-nums">
+                                          {isSavings ? '' : '+'}
+                                          {formatCurrency(Math.abs(difference))}
+                                        </p>
+                                      </div>
+                                      <p className="text-sm font-medium tabular-nums">
+                                        {isSavings
+                                          ? `${Math.abs(percentageDiff).toFixed(1)}% savings`
+                                          : isNeutral
+                                            ? `${percentageDiff.toFixed(1)}% difference`
+                                            : `${percentageDiff.toFixed(1)}% more`}
+                                      </p>
+                                    </div>
+                                  )
+                                })()}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {selfHostedCostPerMinute === null && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Enter your self-hosted infrastructure cost above to see the comparison</p>
+                  </div>
+                )}
+
+                {selfHostedCostPerMinute !== null && filteredRunners.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Select at least one GitHub-hosted runner to compare.</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
-          )}
-
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl">Cost Comparison</CardTitle>
-            <CardDescription>
-              GitHub-hosted runner pricing for 2026 vs. your self-hosted costs
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {filteredRunners.map((runner, index) => {
-                const showSeparator =
-                  index > 0 && runner.os !== filteredRunners[index - 1].os
-
-                return (
-                  <div key={runner.name}>
-                    {showSeparator && <Separator className="my-6" />}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow">
-                      <div className="space-y-1 flex-1">
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant="outline"
-                            className={getOSBadgeColor(runner.os)}
-                          >
-                            {runner.os}
-                          </Badge>
-                          <h3 className="font-semibold text-lg">{runner.name}</h3>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          GitHub-hosted: {formatCurrency(runner.pricePerMinute)}/min
-                        </p>
-                      </div>
-
-                      {selfHostedCostPerMinute !== null && (
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="text-sm text-muted-foreground">
-                              Self-hosted cost (incl. platform fee)
-                            </p>
-                            <p className="font-semibold text-lg tabular-nums">
-                              {formatCurrency(selfHostedCostPerMinute)}/min
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatCurrency(baseSelfHostedCostPerMinute ?? 0)} infra + {formatCurrency(PLATFORM_FEE_PER_MINUTE)} fee
-                            </p>
-                          </div>
-                          <div className="w-px h-12 bg-border" />
-                          <div className="text-right min-w-[140px]">
-                            {(() => {
-                              const { difference, percentageDiff } =
-                                calculateDifference(
-                                  runner.pricePerMinute,
-                                  selfHostedCostPerMinute
-                                )
-                              const isSavings = difference < 0
-                              const isNeutral = Math.abs(percentageDiff) < 5
-
-                              return (
-                                <div
-                                  className={`space-y-1 ${
-                                    isSavings
-                                      ? 'text-success'
-                                      : isNeutral
-                                        ? 'text-warning'
-                                        : 'text-destructive'
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-end gap-1">
-                                    {isSavings ? (
-                                      <Check size={18} weight="bold" />
-                                    ) : isNeutral ? (
-                                      <Warning size={18} weight="bold" />
-                                    ) : (
-                                      <TrendUp size={18} weight="bold" />
-                                    )}
-                                    <p className="font-bold text-lg tabular-nums">
-                                      {isSavings ? '' : '+'}
-                                      {formatCurrency(Math.abs(difference))}
-                                    </p>
-                                  </div>
-                                  <p className="text-sm font-medium tabular-nums">
-                                    {isSavings
-                                      ? `${Math.abs(percentageDiff).toFixed(1)}% savings`
-                                      : isNeutral
-                                        ? `${percentageDiff.toFixed(1)}% difference`
-                                        : `${percentageDiff.toFixed(1)}% more`}
-                                  </p>
-                                </div>
-                              )
-                            })()}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            {selfHostedCostPerMinute === null && (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Enter your self-hosted infrastructure cost above to see the comparison</p>
-              </div>
-            )}
-
-            {selfHostedCostPerMinute !== null && filteredRunners.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Select at least one GitHub-hosted runner to compare.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </TabsContent>
+        </Tabs>
 
         <Card className="shadow-lg border-accent/20 bg-accent/5">
           <CardHeader>
