@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Calculator, TrendUp, TrendDown, Check, Warning } from '@phosphor-icons/react'
+import { Calculator, TrendUp, TrendDown, Check, Warning, ChartBar } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 
 type RunnerType = {
   name: string
@@ -65,6 +66,58 @@ function App() {
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300'
     }
+  }
+
+  const getOSChartColor = (os: string) => {
+    switch (os) {
+      case 'Ubuntu':
+        return 'oklch(0.70 0.15 40)'
+      case 'Windows':
+        return 'oklch(0.60 0.20 240)'
+      case 'macOS':
+        return 'oklch(0.50 0.05 250)'
+      default:
+        return 'oklch(0.50 0.05 250)'
+    }
+  }
+
+  const chartData = selfHostedCostPerMinute !== null ? GITHUB_HOSTED_RUNNERS.map(runner => ({
+    name: runner.name,
+    os: runner.os,
+    'GitHub-hosted': runner.pricePerMinute,
+    'Self-hosted': selfHostedCostPerMinute,
+    difference: selfHostedCostPerMinute - runner.pricePerMinute,
+  })) : []
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload
+      const difference = data.difference
+      const isSavings = difference < 0
+      const percentageDiff = (difference / data['GitHub-hosted']) * 100
+
+      return (
+        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+          <p className="font-semibold mb-2">{data.name}</p>
+          <div className="space-y-1 text-sm">
+            <p className="text-muted-foreground">
+              GitHub-hosted: <span className="font-medium text-foreground">{formatCurrency(data['GitHub-hosted'])}/min</span>
+            </p>
+            <p className="text-muted-foreground">
+              Self-hosted: <span className="font-medium text-foreground">{formatCurrency(data['Self-hosted'])}/min</span>
+            </p>
+            <Separator className="my-2" />
+            <p className={isSavings ? 'text-success font-semibold' : 'text-destructive font-semibold'}>
+              {isSavings ? 'Savings' : 'Extra cost'}: {formatCurrency(Math.abs(difference))}/min
+            </p>
+            <p className={isSavings ? 'text-success text-xs' : 'text-destructive text-xs'}>
+              ({isSavings ? '-' : '+'}{Math.abs(percentageDiff).toFixed(1)}%)
+            </p>
+          </div>
+        </div>
+      )
+    }
+    return null
   }
 
   return (
@@ -144,6 +197,67 @@ function App() {
             </div>
           </CardContent>
         </Card>
+
+        {selfHostedCostPerMinute !== null && (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <ChartBar size={24} weight="duotone" className="text-primary" />
+                <CardTitle className="text-2xl">Visual Comparison</CardTitle>
+              </div>
+              <CardDescription>
+                Cost per minute comparison across all runner types
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={500}>
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.88 0.01 250)" opacity={0.3} />
+                  <XAxis
+                    dataKey="name"
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                    tick={{ fill: 'oklch(0.45 0.02 250)', fontSize: 12 }}
+                  />
+                  <YAxis
+                    label={{ value: 'Cost per minute (USD)', angle: -90, position: 'insideLeft', style: { fill: 'oklch(0.45 0.02 250)' } }}
+                    tick={{ fill: 'oklch(0.45 0.02 250)', fontSize: 12 }}
+                    tickFormatter={(value) => `$${value.toFixed(3)}`}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                    iconType="square"
+                  />
+                  <Bar dataKey="GitHub-hosted" name="GitHub-hosted" radius={[8, 8, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getOSChartColor(entry.os)} />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="Self-hosted" name="Self-hosted" fill="oklch(0.70 0.15 210)" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+              <div className="flex justify-center gap-6 mt-6 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.70 0.15 40)' }} />
+                  <span className="text-sm text-muted-foreground">Ubuntu</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.60 0.20 240)' }} />
+                  <span className="text-sm text-muted-foreground">Windows</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.50 0.05 250)' }} />
+                  <span className="text-sm text-muted-foreground">macOS</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="shadow-lg">
           <CardHeader>
