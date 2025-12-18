@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank, ArrowRight } from '@phosphor-icons/react'
+import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank, ArrowRight, GithubLogo } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -735,10 +735,40 @@ function App() {
               networking) divided by expected usage to determine your per-minute or per-hour
               rate.
             </p>
-            <p>
-              A $0.002/min GitHub Actions platform fee (effective Mar 1, 2026) is automatically
-              added to self-hosted costs in this calculator.
-            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg">
+          <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between py-6">
+            <a
+              href="https://github.com/aatmmr/github-actions-cost-calculator"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-primary font-semibold hover:underline"
+            >
+              <GithubLogo size={22} weight="duotone" />
+              Help adding some ✨
+            </a>
+
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <img
+                src="https://github.com/aatmmr.png?size=80"
+                alt="GitHub avatar for aatmmr"
+                className="h-10 w-10 rounded-full border border-border"
+                loading="lazy"
+              />
+              <div className="leading-tight">
+                <p className="font-semibold text-foreground">Built with ✨ by</p>
+                <a
+                  href="https://github.com/aatmmr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                >
+                  @aatmmr
+                </a>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
