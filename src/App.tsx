@@ -19,6 +19,13 @@ type RunnerType = {
   category: 'standard' | 'x64-large' | 'arm64-large' | 'gpu'
 }
 
+type GitHubPlan = {
+  id: 'enterprise' | 'team' | 'free'
+  name: string
+  includedMinutes: number
+  budgetUsd: number
+}
+
 const GITHUB_HOSTED_RUNNERS: RunnerType[] = [
   // Standard GitHub-hosted runners (2026 pricing)
   { id: 'linux_slim', name: 'Linux 1-core (slim)', os: 'Linux', pricePerMinute: 0.002, category: 'standard' },
@@ -65,8 +72,15 @@ const GITHUB_HOSTED_RUNNERS: RunnerType[] = [
 const MINUTES_IN_WEEK = 7 * 24 * 60
 const MINUTES_IN_MONTH = 30 * 24 * 60 // simplified 30-day month for comparison
 
+const GITHUB_PLANS: GitHubPlan[] = [
+  { id: 'enterprise', name: 'Enterprise', includedMinutes: 50000, budgetUsd: 400 },
+  { id: 'team', name: 'Team', includedMinutes: 3000, budgetUsd: 24 },
+  { id: 'free', name: 'Free', includedMinutes: 2000, budgetUsd: 16 },
+]
+
 function App() {
   const [costInput, setCostInput] = useState('')
+  const [selectedPlan, setSelectedPlan] = useState<GitHubPlan['id']>('enterprise')
   const [timeUnit, setTimeUnit] = useState<'minute' | 'hour' | 'week' | 'month'>('hour')
   const [selectedRunners, setSelectedRunners] = useState<string[]>(
     () => GITHUB_HOSTED_RUNNERS.map((runner) => runner.id)
@@ -74,6 +88,11 @@ function App() {
   const [usagePercent, setUsagePercent] = useState(100)
 
   const parsedInput = costInput ? parseFloat(costInput) : null
+
+  const planDetails = useMemo(
+    () => GITHUB_PLANS.find((plan) => plan.id === selectedPlan),
+    [selectedPlan]
+  )
 
   const baseSelfHostedCostPerMinute = parsedInput !== null
     ? (() => {
@@ -213,6 +232,41 @@ function App() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="github-plan" className="text-base font-medium">
+                  GitHub Plan
+                </Label>
+                <RadioGroup
+                  id="github-plan"
+                  value={selectedPlan}
+                  onValueChange={(value) => setSelectedPlan(value as GitHubPlan['id'])}
+                  className="grid gap-3 md:grid-cols-3"
+                >
+                  {GITHUB_PLANS.map((plan) => (
+                    <label
+                      key={plan.id}
+                      className="flex cursor-pointer flex-col gap-1 rounded-lg border bg-card px-4 py-3 shadow-sm transition hover:border-primary/50"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value={plan.id} id={plan.id} />
+                          <span className="font-semibold text-foreground">{plan.name}</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs font-semibold">
+                          {plan.includedMinutes.toLocaleString()} min
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">Budget: ${plan.budgetUsd.toFixed(0)}</p>
+                    </label>
+                  ))}
+                </RadioGroup>
+                {planDetails && (
+                  <p className="text-xs text-muted-foreground">
+                    {planDetails.name} plan includes {planDetails.includedMinutes.toLocaleString()} build minutes (${planDetails.budgetUsd.toFixed(0)} value).
+                  </p>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="time-unit" className="text-base font-medium">
                   Time Unit
