@@ -94,6 +94,11 @@ function App() {
     [selectedPlan]
   )
 
+  const calculatePlanMinutes = (pricePerMinute: number) => {
+    if (!planDetails) return null
+    return Math.floor(planDetails.budgetUsd / pricePerMinute)
+  }
+
   const baseSelfHostedCostPerMinute = parsedInput !== null
     ? (() => {
         switch (timeUnit) {
@@ -180,6 +185,7 @@ function App() {
       const difference = data.difference
       const isSavings = difference < 0
       const percentageDiff = (difference / data['GitHub-hosted']) * 100
+      const planMinutes = calculatePlanMinutes(data['GitHub-hosted'])
 
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
@@ -194,6 +200,11 @@ function App() {
             <p className="text-xs text-muted-foreground">
               Infrastructure: {formatCurrency(baseSelfHostedCostPerMinute ?? 0)}
             </p>
+            {planMinutes !== null && (
+              <p className="text-xs text-muted-foreground">
+                Plan coverage: {planMinutes.toLocaleString()} min
+              </p>
+            )}
             <Separator className="my-2" />
             <p className={isSavings ? 'text-success font-semibold' : 'text-destructive font-semibold'}>
               {isSavings ? 'Savings' : 'Extra cost'}: {formatCurrency(Math.abs(difference))}/min
@@ -471,6 +482,7 @@ function App() {
                       </div>
                       <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                         {runnersForOS.map((runner) => {
+                          const planMinutes = calculatePlanMinutes(runner.pricePerMinute)
                           const checked = selectedRunners.includes(runner.id)
                           return (
                             <label
@@ -493,6 +505,9 @@ function App() {
                               <div className="flex flex-col">
                                 <span className="font-medium leading-tight">{runner.name}</span>
                                 <span className="text-xs text-muted-foreground">{formatCurrency(runner.pricePerMinute)}/min</span>
+                                {planMinutes !== null && (
+                                  <span className="text-[11px] text-muted-foreground">Included Minutes: {planMinutes.toLocaleString()}</span>
+                                )}
                               </div>
                             </label>
                           )
@@ -609,6 +624,11 @@ function App() {
                               <Badge variant="outline" className={getOSBadgeColor(runner.os)}>{runner.os}</Badge>
                               <span className="font-medium text-foreground">{runner.name}</span>
                             </div>
+                            {planDetails && (
+                              <p className="text-[11px] text-muted-foreground mt-1">
+                                Included Minutes: {calculatePlanMinutes(runner.pricePerMinute)?.toLocaleString()}
+                              </p>
+                            )}
                           </td>
                           <td className="py-3 px-2 text-right tabular-nums">
                             {(() => {
@@ -679,6 +699,11 @@ function App() {
                             <p className="text-sm text-muted-foreground">
                               GitHub-hosted: {formatCurrency(runner.pricePerMinute)}/min
                             </p>
+                            {planDetails && (
+                              <p className="text-xs text-muted-foreground">
+                                Included Minutes available: {calculatePlanMinutes(runner.pricePerMinute)?.toLocaleString()}
+                              </p>
+                            )}
                           </div>
 
                           {selfHostedCostPerMinute !== null && (
