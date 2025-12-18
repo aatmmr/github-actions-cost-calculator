@@ -62,7 +62,6 @@ const GITHUB_HOSTED_RUNNERS: RunnerType[] = [
   { id: 'windows_4_core_gpu', name: 'Windows 4-core (GPU)', os: 'Windows', pricePerMinute: 0.102, category: 'gpu' },
 ]
 
-const PLATFORM_FEE_PER_MINUTE = 0.002 // GitHub Actions cloud platform fee for self-hosted runners from Mar 1, 2026
 const MINUTES_IN_WEEK = 7 * 24 * 60
 const MINUTES_IN_MONTH = 30 * 24 * 60 // simplified 30-day month for comparison
 
@@ -92,10 +91,7 @@ function App() {
       })()
     : null
 
-  const selfHostedCostPerMinute =
-    baseSelfHostedCostPerMinute !== null
-      ? baseSelfHostedCostPerMinute + PLATFORM_FEE_PER_MINUTE
-      : null
+  const selfHostedCostPerMinute = baseSelfHostedCostPerMinute
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -173,7 +169,7 @@ function App() {
               Self-hosted: <span className="font-medium text-foreground">{formatCurrency(data['Self-hosted'])}/min</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              Includes {formatCurrency(baseSelfHostedCostPerMinute ?? 0)} infra + {formatCurrency(PLATFORM_FEE_PER_MINUTE)} fee
+              Infrastructure: {formatCurrency(baseSelfHostedCostPerMinute ?? 0)}
             </p>
             <Separator className="my-2" />
             <p className={isSavings ? 'text-success font-semibold' : 'text-destructive font-semibold'}>
@@ -292,12 +288,12 @@ function App() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-base font-medium">Calculated total (/min)</Label>
+                  <Label className="text-base font-medium">Calculated Cost (/min)</Label>
                   <div className="flex h-12 items-center rounded-md border bg-muted/50 px-3 text-lg font-semibold text-foreground">
                     {selfHostedCostPerMinute !== null ? formatCurrency(selfHostedCostPerMinute) : '—'}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {formatCurrency(baseSelfHostedCostPerMinute ?? 0)} infra + {formatCurrency(PLATFORM_FEE_PER_MINUTE)} platform fee
+                    The effective cost per minute based on your input
                   </p>
                 </div>
               </div>
@@ -614,7 +610,7 @@ function App() {
                                   {formatCurrency(selfHostedCostPerMinute)}/min
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {formatCurrency(baseSelfHostedCostPerMinute ?? 0)} infra + {formatCurrency(PLATFORM_FEE_PER_MINUTE)} fee
+                                  The effective cost per minute based on your input
                                 </p>
                               </div>
                               <div className="w-px h-12 bg-border" />
