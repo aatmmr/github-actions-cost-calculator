@@ -71,6 +71,7 @@ function App() {
   const [selectedRunners, setSelectedRunners] = useState<string[]>(
     () => GITHUB_HOSTED_RUNNERS.map((runner) => runner.id)
   )
+  const [usagePercent, setUsagePercent] = useState(100)
 
   const parsedInput = costInput ? parseFloat(costInput) : null
 
@@ -91,7 +92,10 @@ function App() {
       })()
     : null
 
-  const selfHostedCostPerMinute = baseSelfHostedCostPerMinute
+  // Usage percentage increases the calculated price per minute
+  const selfHostedCostPerMinute = baseSelfHostedCostPerMinute !== null && usagePercent > 0
+    ? baseSelfHostedCostPerMinute / (usagePercent / 100)
+    : null
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -250,51 +254,74 @@ function App() {
                 </RadioGroup>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] items-center">
-                <div className="space-y-2">
-                  <Label htmlFor="cost-input" className="text-base font-medium">
-                    Infrastructure Cost (USD)
-                  </Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      $
-                    </span>
-                    <Input
-                      id="cost-input"
-                      type="number"
-                      step="0.0001"
-                      min="0"
-                      placeholder={
-                        timeUnit === 'minute'
-                          ? '0.010'
-                          : timeUnit === 'hour'
-                            ? '0.600'
-                            : timeUnit === 'week'
-                              ? '10.000'
-                              : '50.000'
-                      }
-                      value={costInput}
-                      onChange={(e) => setCostInput(e.target.value)}
-                      className="pl-7 text-lg h-12"
-                    />
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-start gap-6 w-full">
+                  <div className="space-y-2 flex-1 min-w-[240px] md:basis-[30%]">
+                    <Label htmlFor="cost-input" className="text-base font-medium">
+                      Infrastructure Cost (USD)
+                    </Label>
+                    <div className="relative w-full">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        $
+                      </span>
+                      <Input
+                        id="cost-input"
+                        type="number"
+                        step="0.0001"
+                        min="0"
+                        placeholder={
+                          timeUnit === 'minute'
+                            ? '0.010'
+                            : timeUnit === 'hour'
+                              ? '0.600'
+                              : timeUnit === 'week'
+                                ? '10.000'
+                                : '50.000'
+                        }
+                        value={costInput}
+                        onChange={(e) => setCostInput(e.target.value)}
+                        className="pl-7 text-lg h-12"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Add the cost for a single runner for the selected time unit.
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Add the cost for a single runner for the selected time unit.
-                  </p>
-                </div>
 
-                <div className="hidden md:flex items-center justify-center text-muted-foreground">
-                  <ArrowRight size={28} weight="duotone" className="text-primary" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-base font-medium">Calculated Cost (/min)</Label>
-                  <div className="flex h-12 items-center rounded-md border bg-muted/50 px-3 text-lg font-semibold text-foreground">
-                    {selfHostedCostPerMinute !== null ? formatCurrency(selfHostedCostPerMinute) : '—'}
+                  <div className="flex flex-col gap-1 items-start pt-1">
+                    <Label htmlFor="usage-percent" className="text-base font-medium">Usage Rate (%)</Label>
+                    <div className="flex items-center gap-3">
+                    <ArrowRight size={20} weight="duotone" className="text-muted-foreground" />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="usage-percent"
+                        type="number"
+                        min="1"
+                        max="100"
+                        step="1"
+                        value={usagePercent}
+                        onChange={(e) => setUsagePercent(Number(e.target.value))}
+                        className="w-16 text-center text-lg h-12 px-2"
+                        aria-label="Usage Percentage"
+                      />
+                      <span className="text-base font-medium text-muted-foreground">%</span>
+                    </div>
+                    <ArrowRight size={20} weight="duotone" className="text-muted-foreground" />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    The effective cost per minute based on your input
-                  </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Relative usage of this runner.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 flex-1 min-w-[200px] md:basis-[30%]">
+                    <Label className="text-base font-medium">Calculated Cost (/min)</Label>
+                    <div className="flex h-12 items-center rounded-md border bg-muted/50 px-3 text-lg font-semibold text-foreground min-w-[180px]">
+                      {selfHostedCostPerMinute !== null ? formatCurrency(selfHostedCostPerMinute) : '—'}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      The effective cost per minute based on your input and usage percentage.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
