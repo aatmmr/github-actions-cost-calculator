@@ -79,6 +79,8 @@ const GITHUB_PLANS: GitHubPlan[] = [
 ]
 
 function App() {
+  const [inputMode, setInputMode] = useState<'cost' | 'minutes'>('cost')
+  const [monthlyMinutes, setMonthlyMinutes] = useState('')
   const [costInput, setCostInput] = useState('')
   const [selectedPlan, setSelectedPlan] = useState<GitHubPlan['id']>('enterprise')
   const [timeUnit, setTimeUnit] = useState<'minute' | 'hour' | 'week' | 'month'>('hour')
@@ -130,6 +132,15 @@ function App() {
     }).format(value)
   }
 
+  const formatCurrencyUsd2 = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)
+  }
+
   const calculateDifference = (githubPrice: number, selfHostedPrice: number) => {
     const difference = selfHostedPrice - githubPrice
     const percentageDiff = (difference / githubPrice) * 100
@@ -166,6 +177,26 @@ function App() {
     () => GITHUB_HOSTED_RUNNERS.filter((runner) => selectedRunners.includes(runner.id)),
     [selectedRunners]
   )
+
+  const parsedMinutes = useMemo(() => {
+    if (!monthlyMinutes) return null
+    const parsed = Number(monthlyMinutes)
+    const isValid =
+      Number.isFinite(parsed) &&
+      Number.isInteger(parsed) &&
+      parsed > 0 &&
+      parsed <= Number.MAX_SAFE_INTEGER
+    return isValid ? parsed : null
+  }, [monthlyMinutes])
+
+  const monthlyCostData = useMemo(() => {
+    if (parsedMinutes === null) return []
+    
+    return filteredRunners.map(runner => ({
+      ...runner,
+      monthlyCost: runner.pricePerMinute * parsedMinutes,
+    })).sort((a, b) => a.monthlyCost - b.monthlyCost)
+  }, [filteredRunners, parsedMinutes])
 
   const chartData = selfHostedCostPerMinute !== null
     ? filteredRunners.map((runner) => ({
@@ -279,6 +310,35 @@ function App() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="input-mode" className="text-base font-medium">
+                  Input Mode
+                </Label>
+                <RadioGroup
+                  id="input-mode"
+                  value={inputMode}
+                  onValueChange={(value) => setInputMode(value as 'cost' | 'minutes')}
+                  className="flex gap-4 flex-wrap"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="cost" id="cost" />
+                    <Label htmlFor="cost" className="cursor-pointer font-normal inline-flex items-center gap-2">
+                      <Coins size={16} weight="duotone" className="text-muted-foreground" />
+                      Runner Cost
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="minutes" id="minutes" />
+                    <Label htmlFor="minutes" className="cursor-pointer font-normal inline-flex items-center gap-2">
+                      <Clock size={16} weight="duotone" className="text-muted-foreground" />
+                      Build Minutes
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {inputMode === 'cost' && (
+              <>
+              <div className="space-y-2">
                 <Label htmlFor="time-unit" className="text-base font-medium">
                   Time Unit
                 </Label>
@@ -389,6 +449,53 @@ function App() {
                   </div>
                 </div>
               </div>
+              </>
+              )}
+
+              {inputMode === 'minutes' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="monthly-minutes" className="text-base font-medium">
+                    Monthly Build Minutes
+                  </Label>
+                  <Input
+                    id="monthly-minutes"
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="e.g., 10000"
+                    value={monthlyMinutes}
+                    onChange={(e) => setMonthlyMinutes(e.target.value)}
+                    className="text-lg h-12"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Enter your estimated monthly workflow minutes
+                  </p>
+                  {monthlyMinutes && parsedMinutes === null && (
+                    <p className="text-xs text-destructive mt-1">
+                      Please enter a valid positive number of minutes
+                    </p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-base font-medium">Quick Select</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[1000, 5000, 10000, 50000, 100000].map((minutes) => (
+                      <Button
+                        key={minutes}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMonthlyMinutes(minutes.toString())}
+                        className="font-medium"
+                      >
+                        {minutes.toLocaleString()}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -787,6 +894,72 @@ function App() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {inputMode === 'minutes' && monthlyCostData.length > 0 && (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <ChartBar size={24} weight="duotone" className="text-primary" />
+                <CardTitle className="text-2xl">Monthly Cost Comparison</CardTitle>
+              </div>
+              <CardDescription>
+                Estimated monthly cost for {parsedMinutes?.toLocaleString()} build minutes across all selected runners
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="text-left border-b">
+                      <th className="py-3 pr-4 font-medium text-muted-foreground">Runner</th>
+                      <th className="py-3 px-4 font-medium text-muted-foreground">OS</th>
+                      <th className="py-3 px-4 font-medium text-muted-foreground text-right">Per Minute</th>
+                      <th className="py-3 px-4 font-medium text-muted-foreground text-right">Monthly Cost</th>
+                      <th className="py-3 px-4 font-medium text-muted-foreground text-right">vs. Cheapest</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {monthlyCostData.map((runner, index) => {
+                      const isLowest = index === 0
+                      const costDiff = isLowest ? 0 : runner.monthlyCost - monthlyCostData[0].monthlyCost
+                      
+                      return (
+                        <tr key={runner.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="py-3 pr-4">
+                            <span className="font-medium text-foreground">{runner.name}</span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant="outline" className={getOSBadgeColor(runner.os)}>
+                              {runner.os}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4 text-right tabular-nums text-foreground">
+                            {formatCurrency(runner.pricePerMinute)}
+                          </td>
+                          <td className="py-3 px-4 text-right tabular-nums font-semibold text-foreground">
+                            {formatCurrencyUsd2(runner.monthlyCost)}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {isLowest ? (
+                              <div className="inline-flex items-center gap-1.5 text-success font-semibold">
+                                <Check size={16} weight="bold" />
+                                <span>Lowest</span>
+                              </div>
+                            ) : (
+                              <span className="text-destructive font-medium tabular-nums">
+                                +{formatCurrencyUsd2(costDiff)}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="shadow-lg border-accent/20 bg-accent/5">
           <CardHeader>
