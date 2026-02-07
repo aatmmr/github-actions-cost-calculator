@@ -132,6 +132,15 @@ function App() {
     }).format(value)
   }
 
+  const formatCurrencyUsd2 = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)
+  }
+
   const calculateDifference = (githubPrice: number, selfHostedPrice: number) => {
     const difference = selfHostedPrice - githubPrice
     const percentageDiff = (difference / githubPrice) * 100
@@ -171,8 +180,13 @@ function App() {
 
   const parsedMinutes = useMemo(() => {
     if (!monthlyMinutes) return null
-    const parsed = parseInt(monthlyMinutes, 10)
-    return !isNaN(parsed) && parsed > 0 ? parsed : null
+    const parsed = Number(monthlyMinutes)
+    const isValid =
+      Number.isFinite(parsed) &&
+      Number.isInteger(parsed) &&
+      parsed > 0 &&
+      parsed <= Number.MAX_SAFE_INTEGER
+    return isValid ? parsed : null
   }, [monthlyMinutes])
 
   const monthlyCostData = useMemo(() => {
@@ -923,12 +937,7 @@ function App() {
                             {formatCurrency(runner.pricePerMinute)}
                           </td>
                           <td className="py-3 px-4 text-right tabular-nums font-semibold text-foreground">
-                            {new Intl.NumberFormat('en-US', {
-                              style: 'currency',
-                              currency: 'USD',
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }).format(runner.monthlyCost)}
+                            {formatCurrencyUsd2(runner.monthlyCost)}
                           </td>
                           <td className="py-3 px-4 text-right">
                             {isLowest ? (
@@ -938,12 +947,7 @@ function App() {
                               </div>
                             ) : (
                               <span className="text-destructive font-medium tabular-nums">
-                                +{new Intl.NumberFormat('en-US', {
-                                  style: 'currency',
-                                  currency: 'USD',
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }).format(costDiff)}
+                                +{formatCurrencyUsd2(costDiff)}
                               </span>
                             )}
                           </td>
