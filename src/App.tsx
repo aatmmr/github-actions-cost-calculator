@@ -169,10 +169,14 @@ function App() {
     [selectedRunners]
   )
 
-  const parsedMinutes = monthlyMinutes ? parseInt(monthlyMinutes, 10) : null
+  const parsedMinutes = useMemo(() => {
+    if (!monthlyMinutes) return null
+    const parsed = parseInt(monthlyMinutes, 10)
+    return !isNaN(parsed) && parsed > 0 ? parsed : null
+  }, [monthlyMinutes])
 
   const monthlyCostData = useMemo(() => {
-    if (parsedMinutes === null || parsedMinutes <= 0) return []
+    if (parsedMinutes === null) return []
     
     return filteredRunners.map(runner => ({
       ...runner,
@@ -453,9 +457,9 @@ function App() {
                   <p className="text-xs text-muted-foreground mt-1">
                     Enter your estimated monthly workflow minutes
                   </p>
-                  {parsedMinutes !== null && parsedMinutes <= 0 && (
+                  {monthlyMinutes && parsedMinutes === null && (
                     <p className="text-xs text-destructive mt-1">
-                      Please enter a positive number of minutes
+                      Please enter a valid positive number of minutes
                     </p>
                   )}
                 </div>
