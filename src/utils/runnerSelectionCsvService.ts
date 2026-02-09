@@ -51,6 +51,10 @@ export function parseSelectionFromCsv(
 ): { validIds: string[]; invalidIds: string[] } {
   const validIds: string[] = []
   const invalidIds: string[] = []
+  const seenIds = new Set<string>()
+  
+  // Convert to Set for O(1) lookup performance
+  const validRunnerIdsSet = new Set(validRunnerIds)
   
   // Split into lines and remove empty lines
   const lines = csvContent.split('\n').filter(line => line.trim())
@@ -76,8 +80,9 @@ export function parseSelectionFromCsv(
     const fields = parseCSVLine(line)
     if (fields.length > idIndex) {
       const id = fields[idIndex].trim()
-      if (id) {
-        if (validRunnerIds.includes(id)) {
+      if (id && !seenIds.has(id)) {
+        seenIds.add(id)
+        if (validRunnerIdsSet.has(id)) {
           validIds.push(id)
         } else {
           invalidIds.push(id)
