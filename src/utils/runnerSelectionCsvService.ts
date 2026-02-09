@@ -89,6 +89,8 @@ export function parseSelectionFromCsv(
 
 /**
  * Parse a single CSV line, handling quoted fields
+ * @param line - A single line from a CSV file
+ * @returns Array of field values with quotes and escapes processed
  */
 function parseCSVLine(line: string): string[] {
   const fields: string[] = []

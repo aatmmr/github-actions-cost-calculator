@@ -92,6 +92,8 @@ function App() {
   const [usagePercent, setUsagePercent] = useState(100)
   const [invalidRunnerIds, setInvalidRunnerIds] = useState<string[]>([])
   const [showInvalidIdsModal, setShowInvalidIdsModal] = useState(false)
+  const [csvError, setCsvError] = useState<string>('')
+  const [showCsvErrorModal, setShowCsvErrorModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const parsedInput = costInput ? parseFloat(costInput) : null
@@ -125,7 +127,8 @@ function App() {
           setShowInvalidIdsModal(true)
         }
       } catch (error) {
-        alert(`Error parsing CSV: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        setCsvError(error instanceof Error ? error.message : 'Unknown error occurred while parsing CSV')
+        setShowCsvErrorModal(true)
       }
     }
     reader.readAsText(file)
@@ -1114,6 +1117,26 @@ function App() {
           </div>
           <DialogFooter>
             <Button onClick={() => setShowInvalidIdsModal(false)}>
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal for displaying CSV parsing errors */}
+      <Dialog open={showCsvErrorModal} onOpenChange={setShowCsvErrorModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>CSV Import Error</DialogTitle>
+            <DialogDescription>
+              There was an error parsing your CSV file:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-md border p-4 bg-muted">
+            <p className="text-sm text-destructive">{csvError}</p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowCsvErrorModal(false)}>
               OK
             </Button>
           </DialogFooter>
