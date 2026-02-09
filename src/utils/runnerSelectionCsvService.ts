@@ -30,9 +30,12 @@ export function exportSelectionToCsv(selectedIds: string[], allRunners: RunnerTy
   // Create CSV header
   const header = 'id,name,os\n'
   
+  // Convert to Set for O(1) lookup performance
+  const selectedIdsSet = new Set(selectedIds)
+  
   // Filter to only selected runners and map to CSV rows
   const rows = allRunners
-    .filter(runner => selectedIds.includes(runner.id))
+    .filter(runner => selectedIdsSet.has(runner.id))
     .map(runner => `${escapeCsvField(runner.id)},${escapeCsvField(runner.name)},${escapeCsvField(runner.os)}`)
     .join('\n')
   
@@ -60,7 +63,7 @@ export function parseSelectionFromCsv(
   const lines = csvContent.split('\n').filter(line => line.trim())
   
   if (lines.length === 0) {
-    throw new Error('CSV file is empty. Please provide a file with at least a header row and one data row.')
+    throw new Error('CSV file is empty. Please provide a file with a header row.')
   }
   
   // Parse header to find id column index

@@ -98,10 +98,14 @@ function App() {
 
   const parsedInput = costInput ? parseFloat(costInput) : null
 
+  // Helper to generate a cross-platform compatible timestamp for filenames
+  const formatTimestampForFilename = () => {
+    return new Date().toISOString().split('T').join('_').replace(/[:.]/g, '-').slice(0, 19)
+  }
+
   // Handler for exporting selected runners to CSV
   const handleExport = () => {
-    const timestamp = new Date().toISOString().split('T').join('_').replace(/[:.]/g, '-').slice(0, 19)
-    const filename = `runner-selection-${timestamp}.csv`
+    const filename = `runner-selection-${formatTimestampForFilename()}.csv`
     const csvContent = exportSelectionToCsv(selectedRunners, GITHUB_HOSTED_RUNNERS)
     downloadCsv(csvContent, filename)
   }
