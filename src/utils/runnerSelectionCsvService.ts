@@ -9,6 +9,18 @@ type RunnerType = {
 }
 
 /**
+ * Escape CSV fields that contain commas, quotes, or newlines
+ * @param field - Field value to escape
+ * @returns Escaped field value, wrapped in quotes if necessary
+ */
+function escapeCsvField(field: string): string {
+  if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+    return `"${field.replace(/"/g, '""')}"`
+  }
+  return field
+}
+
+/**
  * Export selected runners to CSV string
  * @param selectedIds - Array of selected runner IDs
  * @param allRunners - Array of all available runners
@@ -21,17 +33,7 @@ export function exportSelectionToCsv(selectedIds: string[], allRunners: RunnerTy
   // Filter to only selected runners and map to CSV rows
   const rows = allRunners
     .filter(runner => selectedIds.includes(runner.id))
-    .map(runner => {
-      // Escape CSV fields that contain commas, quotes, or newlines
-      const escapeCsvField = (field: string) => {
-        if (field.includes(',') || field.includes('"') || field.includes('\n')) {
-          return `"${field.replace(/"/g, '""')}"`
-        }
-        return field
-      }
-      
-      return `${escapeCsvField(runner.id)},${escapeCsvField(runner.name)},${escapeCsvField(runner.os)}`
-    })
+    .map(runner => `${escapeCsvField(runner.id)},${escapeCsvField(runner.name)},${escapeCsvField(runner.os)}`)
     .join('\n')
   
   return header + rows
@@ -54,7 +56,7 @@ export function parseSelectionFromCsv(
   const lines = csvContent.split('\n').filter(line => line.trim())
   
   if (lines.length === 0) {
-    throw new Error('CSV file is empty')
+    throw new Error('CSV file is empty. Please provide a file with at least a header row and one data row.')
   }
   
   // Parse header to find id column index
