@@ -65,8 +65,8 @@ export function AppSidebar({ currentView, onNavigate }: AppSidebarProps) {
                   <Calculator size={18} weight="duotone" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">GH Actions Cost</span>
-                  <span className="truncate text-xs text-muted-foreground">Calculator</span>
+                  <span className="truncate font-semibold">GitHub Actions</span>
+                  <span className="truncate text-xs text-muted-foreground">Cost Calculator</span>
                 </div>
               </div>
             </SidebarMenuButton>
