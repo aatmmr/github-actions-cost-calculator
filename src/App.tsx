@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from 'react'
-import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank, ArrowRight, GithubLogo, Export, Upload } from '@phosphor-icons/react'
+import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank, ArrowRight, Export, Upload } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,11 +8,12 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import { exportSelectionToCsv, parseSelectionFromCsv, downloadCsv } from '@/utils/runnerSelectionCsvService'
 import { UsageAnalysis } from '@/components/UsageAnalysis'
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { AppSidebar, AppView } from '@/components/AppSidebar'
 import {
   GITHUB_HOSTED_RUNNERS,
   GITHUB_PLANS,
@@ -22,8 +23,6 @@ import {
   type RunnerType,
   type GitHubPlan,
 } from '@/data/runners'
-
-type AppView = 'calculator' | 'usage'
 
 type RunnerType = {
   id: string
@@ -100,7 +99,7 @@ const GITHUB_PLANS: GitHubPlan[] = [
 ]
 
 function App() {
-  const [currentView, setCurrentView] = useState<AppView>('calculator')
+  const [currentView, setCurrentView] = useState<AppView>({ section: 'calculator', tab: 'select' })
   const [inputMode, setInputMode] = useState<'cost' | 'minutes'>('cost')
   const [monthlyMinutes, setMonthlyMinutes] = useState('')
   const [costInput, setCostInput] = useState('')
@@ -323,35 +322,23 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="text-center space-y-3">
-          <div className="flex items-center justify-center gap-3">
-            <Calculator size={36} weight="duotone" className="text-primary" />
-            <h1 className="text-3xl md:text-4xl font-bold text-primary tracking-tight">
+    <SidebarProvider defaultOpen={true}>
+      <AppSidebar currentView={currentView} onNavigate={setCurrentView} />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <div className="flex items-center gap-2">
+            <Calculator size={24} weight="duotone" className="text-primary" />
+            <h1 className="text-lg md:text-xl font-bold text-primary tracking-tight">
               GitHub Actions Cost Calculator
             </h1>
           </div>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Compare runner costs and analyze your usage data
-          </p>
-          <div className="pt-4">
-            <Tabs value={currentView} onValueChange={(v) => setCurrentView(v as AppView)} className="w-full">
-              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-                <TabsTrigger value="calculator" className="gap-2">
-                  <Coins className="w-4 h-4" />
-                  Cost Calculator
-                </TabsTrigger>
-                <TabsTrigger value="usage" className="gap-2">
-                  <ChartBar className="w-4 h-4" />
-                  Usage Analysis
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
+        </header>
+        <main className="flex-1 p-4 md:p-6">
+          <div className="max-w-6xl mx-auto space-y-6">
 
-        {currentView === 'usage' ? (
+        {currentView.section === 'usage' ? (
           <UsageAnalysis />
         ) : (
           <>
@@ -591,27 +578,7 @@ function App() {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="select" className="space-y-6">
-          <TabsList className="w-full grid grid-cols-2 md:grid-cols-4">
-            <TabsTrigger value="select">
-              <ListChecks weight="duotone" />
-              Select Runners
-            </TabsTrigger>
-            <TabsTrigger value="visual">
-              <SquaresFour weight="duotone" />
-              Visual Comparison
-            </TabsTrigger>
-            <TabsTrigger value="examples">
-              <Coins weight="duotone" />
-              Example Costs
-            </TabsTrigger>
-            <TabsTrigger value="comparison">
-              <ArrowsLeftRight weight="duotone" />
-              Cost Comparison
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="select">
+        {currentView.tab === 'select' && (
             <Card className="shadow-lg">
               <CardHeader>
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -758,10 +725,10 @@ function App() {
                 })}
               </CardContent>
             </Card>
-          </TabsContent>
+        )}
 
-          <TabsContent value="visual">
-            {selfHostedCostPerMinute !== null ? (
+        {currentView.tab === 'visual' && (
+            selfHostedCostPerMinute !== null ? (
               <Card className="shadow-lg">
                 <CardHeader>
                   <div className="flex items-center gap-2">
@@ -826,11 +793,11 @@ function App() {
                   Enter your self-hosted cost to see the visual comparison.
                 </CardContent>
               </Card>
-            )}
-          </TabsContent>
+            )
+        )}
 
-          <TabsContent value="examples">
-            {selfHostedCostPerMinute !== null ? (
+        {currentView.tab === 'examples' && (
+            selfHostedCostPerMinute !== null ? (
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-2xl">Example workflow costs</CardTitle>
@@ -905,10 +872,10 @@ function App() {
                   Enter your self-hosted cost to see example workflow costs.
                 </CardContent>
               </Card>
-            )}
-          </TabsContent>
+            )
+        )}
 
-          <TabsContent value="comparison">
+        {currentView.tab === 'comparison' && (
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl">Cost Comparison</CardTitle>
@@ -1025,8 +992,7 @@ function App() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+        )}
 
         {inputMode === 'minutes' && monthlyCostData.length > 0 && (
           <Card className="shadow-lg">
@@ -1094,69 +1060,6 @@ function App() {
           </Card>
         )}
 
-        <Card className="shadow-lg border-accent/20 bg-accent/5">
-          <CardHeader>
-            <CardTitle className="text-xl">About This Calculator</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>
-              This calculator helps you compare the cost of GitHub-hosted runners versus
-              self-hosted infrastructure for GitHub Actions workflows.
-            </p>
-            <p>
-              GitHub-hosted runner pricing shown is based on the official 2026 rates from{' '}
-              <a
-                href="https://docs.github.com/en/billing/reference/actions-runner-pricing"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-accent hover:underline font-medium"
-              >
-                GitHub's documentation
-              </a>
-              .
-            </p>
-            <p>
-              Self-hosted costs should include infrastructure expenses (compute, storage,
-              networking) divided by expected usage to determine your per-minute or per-hour
-              rate.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg">
-          <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between py-6">
-            <a
-              href="https://github.com/aatmmr/github-actions-cost-calculator"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary font-semibold hover:underline"
-            >
-              <GithubLogo size={22} weight="duotone" />
-              Help adding some ✨
-            </a>
-
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <img
-                src="https://github.com/aatmmr.png?size=80"
-                alt="GitHub avatar for aatmmr"
-                className="h-10 w-10 rounded-full border border-border"
-                loading="lazy"
-              />
-              <div className="leading-tight">
-                <p className="font-semibold text-foreground">Built with ✨ by</p>
-                <a
-                  href="https://github.com/aatmmr"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline font-medium"
-                >
-                  @aatmmr
-                </a>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
       {/* Modal for displaying invalid runner IDs */}
       <Dialog open={showInvalidIdsModal} onOpenChange={setShowInvalidIdsModal}>
         <DialogContent>
@@ -1204,8 +1107,10 @@ function App() {
       </Dialog>
         </>
         )}
-      </div>
-    </div>
+          </div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
 
