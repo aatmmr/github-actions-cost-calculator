@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank, ArrowRight, GithubLogo } from '@phosphor-icons/react'
+import { useMemo, useState, useRef } from 'react'
+import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank, ArrowRight, GithubLogo, Export, Upload } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,7 +9,9 @@ import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
+import { exportSelectionToCsv, parseSelectionFromCsv, downloadCsv } from '@/utils/runnerSelectionCsvService'
 
 type RunnerType = {
   id: string
@@ -88,8 +90,58 @@ function App() {
     () => GITHUB_HOSTED_RUNNERS.map((runner) => runner.id)
   )
   const [usagePercent, setUsagePercent] = useState(100)
+  const [invalidRunnerIds, setInvalidRunnerIds] = useState<string[]>([])
+  const [showInvalidIdsModal, setShowInvalidIdsModal] = useState(false)
+  const [csvError, setCsvError] = useState<string>('')
+  const [showCsvErrorModal, setShowCsvErrorModal] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const parsedInput = costInput ? parseFloat(costInput) : null
+
+  // Helper to generate a cross-platform compatible timestamp for filenames
+  const formatTimestampForFilename = () => {
+    return new Date().toISOString().split('T').join('_').replace(/[:.]/g, '-').slice(0, 19)
+  }
+
+  // Handler for exporting selected runners to CSV
+  const handleExport = () => {
+    const filename = `runner-selection-${formatTimestampForFilename()}.csv`
+    const csvContent = exportSelectionToCsv(selectedRunners, GITHUB_HOSTED_RUNNERS)
+    downloadCsv(csvContent, filename)
+  }
+
+  // Handler for importing runner selection from CSV
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const csvContent = e.target?.result as string
+        const validRunnerIds = GITHUB_HOSTED_RUNNERS.map(r => r.id)
+        const { validIds, invalidIds } = parseSelectionFromCsv(csvContent, validRunnerIds)
+
+        // Update selection with valid IDs
+        setSelectedRunners(validIds)
+
+        // Show modal if there are invalid IDs
+        if (invalidIds.length > 0) {
+          setInvalidRunnerIds(invalidIds)
+          setShowInvalidIdsModal(true)
+        }
+      } catch (error) {
+        setCsvError(error instanceof Error ? error.message : 'Unknown error occurred while parsing CSV')
+        setShowCsvErrorModal(true)
+      }
+    }
+    reader.readAsText(file)
+
+    // Reset file input so the same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
 
   const planDetails = useMemo(
     () => GITHUB_PLANS.find((plan) => plan.id === selectedPlan),
@@ -530,7 +582,7 @@ function App() {
                       Toggle which runners appear in the chart and comparison (2026 pricing)
                     </CardDescription>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Button
                       variant="outline"
                       size="sm"
@@ -545,6 +597,30 @@ function App() {
                     >
                       Deselect all
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExport}
+                      disabled={selectedRunners.length === 0}
+                    >
+                      <Export weight="duotone" className="mr-1" />
+                      Export
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload weight="duotone" className="mr-1" />
+                      Import
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv"
+                      onChange={handleImport}
+                      style={{ display: 'none' }}
+                    />
                   </div>
                 </div>
               </CardHeader>
@@ -1024,6 +1100,52 @@ function App() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal for displaying invalid runner IDs */}
+      <Dialog open={showInvalidIdsModal} onOpenChange={setShowInvalidIdsModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unsupported Runners</DialogTitle>
+            <DialogDescription>
+              The following runner IDs from your CSV file are not recognized or supported:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-60 overflow-y-auto rounded-md border p-4">
+            <ul className="list-disc list-inside space-y-1">
+              {invalidRunnerIds.map((id) => (
+                <li key={id} className="text-sm font-mono">
+                  {id}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowInvalidIdsModal(false)}>
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal for displaying CSV parsing errors */}
+      <Dialog open={showCsvErrorModal} onOpenChange={setShowCsvErrorModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>CSV Import Error</DialogTitle>
+            <DialogDescription>
+              There was an error parsing your CSV file:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-md border p-4 bg-muted">
+            <p className="text-sm text-destructive">{csvError}</p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowCsvErrorModal(false)}>
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
