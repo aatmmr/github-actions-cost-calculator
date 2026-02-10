@@ -107,9 +107,37 @@ export function UsageAnalysis() {
                   className="hidden"
                   onChange={handleFileInputChange}
                 />
-                <p className="text-xs text-muted-foreground mt-4">
-                  Expected columns: Job, Workflow, Total minutes, Job runs, Runner type, Runner labels
-                </p>
+                <div className="mt-6 pt-4 border-t border-border/50">
+                  <p className="text-sm font-medium text-foreground mb-3">How to get the CSV:</p>
+                  <ol className="text-xs text-muted-foreground space-y-1.5 inline-block text-left">
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-foreground/70">1.</span>
+                      Go to your repository or organization on GitHub
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-foreground/70">2.</span>
+                      Navigate to <strong>Insights</strong> → <strong>Action Usage Metrics</strong>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-foreground/70">3.</span>
+                      Select the <strong>Jobs</strong> tab
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-foreground/70">4.</span>
+                      Click <strong>Export CSV</strong> to download
+                    </li>
+                  </ol>
+                  <p className="text-xs text-muted-foreground mt-3">
+                    <a 
+                      href="https://docs.github.com/en/actions/how-tos/administer/view-metrics" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary underline hover:no-underline"
+                    >
+                      View full documentation →
+                    </a>
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
