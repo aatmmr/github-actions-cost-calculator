@@ -12,75 +12,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import { exportSelectionToCsv, parseSelectionFromCsv, downloadCsv } from '@/utils/runnerSelectionCsvService'
+import { UsageAnalysis } from '@/components/UsageAnalysis'
+import {
+  GITHUB_HOSTED_RUNNERS,
+  GITHUB_PLANS,
+  MINUTES_IN_WEEK,
+  MINUTES_IN_MONTH,
+  DEFAULT_RUNNER_IDS,
+  type RunnerType,
+  type GitHubPlan,
+} from '@/data/runners'
 
-type RunnerType = {
-  id: string
-  name: string
-  os: 'Linux' | 'Windows' | 'macOS'
-  pricePerMinute: number
-  category: 'standard' | 'x64-large' | 'arm64-large' | 'gpu'
-}
-
-type GitHubPlan = {
-  id: 'enterprise' | 'team' | 'free'
-  name: string
-  includedMinutes: number
-  budgetUsd: number
-}
-
-const GITHUB_HOSTED_RUNNERS: RunnerType[] = [
-  // Standard GitHub-hosted runners (2026 pricing)
-  { id: 'linux_slim', name: 'Linux 1-core (slim)', os: 'Linux', pricePerMinute: 0.002, category: 'standard' },
-  { id: 'linux', name: 'Linux 2-core', os: 'Linux', pricePerMinute: 0.006, category: 'standard' },
-  { id: 'windows', name: 'Windows 2-core', os: 'Windows', pricePerMinute: 0.010, category: 'standard' },
-  { id: 'macos', name: 'macOS 3-core/4-core', os: 'macOS', pricePerMinute: 0.062, category: 'standard' },
-
-  // x64-powered larger runners (2026 pricing)
-  { id: 'linux_2_core_advanced', name: 'Linux 2-core (advanced)', os: 'Linux', pricePerMinute: 0.006, category: 'x64-large' },
-  { id: 'linux_4_core', name: 'Linux 4-core', os: 'Linux', pricePerMinute: 0.012, category: 'x64-large' },
-  { id: 'linux_8_core', name: 'Linux 8-core', os: 'Linux', pricePerMinute: 0.022, category: 'x64-large' },
-  { id: 'linux_16_core', name: 'Linux 16-core', os: 'Linux', pricePerMinute: 0.042, category: 'x64-large' },
-  { id: 'linux_32_core', name: 'Linux 32-core', os: 'Linux', pricePerMinute: 0.082, category: 'x64-large' },
-  { id: 'linux_64_core', name: 'Linux 64-core', os: 'Linux', pricePerMinute: 0.162, category: 'x64-large' },
-  { id: 'linux_96_core', name: 'Linux 96-core', os: 'Linux', pricePerMinute: 0.252, category: 'x64-large' },
-  { id: 'windows_4_core', name: 'Windows 4-core', os: 'Windows', pricePerMinute: 0.022, category: 'x64-large' },
-  { id: 'windows_8_core', name: 'Windows 8-core', os: 'Windows', pricePerMinute: 0.042, category: 'x64-large' },
-  { id: 'windows_16_core', name: 'Windows 16-core', os: 'Windows', pricePerMinute: 0.082, category: 'x64-large' },
-  { id: 'windows_32_core', name: 'Windows 32-core', os: 'Windows', pricePerMinute: 0.162, category: 'x64-large' },
-  { id: 'windows_64_core', name: 'Windows 64-core', os: 'Windows', pricePerMinute: 0.322, category: 'x64-large' },
-  { id: 'windows_96_core', name: 'Windows 96-core', os: 'Windows', pricePerMinute: 0.552, category: 'x64-large' },
-  { id: 'macos_l', name: 'macOS 12-core', os: 'macOS', pricePerMinute: 0.077, category: 'x64-large' },
-
-  // arm64-powered larger runners (2026 pricing)
-  { id: 'linux_2_core_arm', name: 'Linux 2-core (ARM)', os: 'Linux', pricePerMinute: 0.005, category: 'arm64-large' },
-  { id: 'linux_4_core_arm', name: 'Linux 4-core (ARM)', os: 'Linux', pricePerMinute: 0.008, category: 'arm64-large' },
-  { id: 'linux_8_core_arm', name: 'Linux 8-core (ARM)', os: 'Linux', pricePerMinute: 0.014, category: 'arm64-large' },
-  { id: 'linux_16_core_arm', name: 'Linux 16-core (ARM)', os: 'Linux', pricePerMinute: 0.026, category: 'arm64-large' },
-  { id: 'linux_32_core_arm', name: 'Linux 32-core (ARM)', os: 'Linux', pricePerMinute: 0.050, category: 'arm64-large' },
-  { id: 'linux_64_core_arm', name: 'Linux 64-core (ARM)', os: 'Linux', pricePerMinute: 0.098, category: 'arm64-large' },
-  { id: 'windows_2_core_arm', name: 'Windows 2-core (ARM)', os: 'Windows', pricePerMinute: 0.008, category: 'arm64-large' },
-  { id: 'windows_4_core_arm', name: 'Windows 4-core (ARM)', os: 'Windows', pricePerMinute: 0.014, category: 'arm64-large' },
-  { id: 'windows_8_core_arm', name: 'Windows 8-core (ARM)', os: 'Windows', pricePerMinute: 0.026, category: 'arm64-large' },
-  { id: 'windows_16_core_arm', name: 'Windows 16-core (ARM)', os: 'Windows', pricePerMinute: 0.050, category: 'arm64-large' },
-  { id: 'windows_32_core_arm', name: 'Windows 32-core (ARM)', os: 'Windows', pricePerMinute: 0.098, category: 'arm64-large' },
-  { id: 'windows_64_core_arm', name: 'Windows 64-core (ARM)', os: 'Windows', pricePerMinute: 0.194, category: 'arm64-large' },
-  { id: 'macos_xl', name: 'macOS 5-core (M2 Pro)', os: 'macOS', pricePerMinute: 0.102, category: 'arm64-large' },
-
-  // GPU-powered runners (2026 pricing)
-  { id: 'linux_4_core_gpu', name: 'Linux 4-core (GPU)', os: 'Linux', pricePerMinute: 0.052, category: 'gpu' },
-  { id: 'windows_4_core_gpu', name: 'Windows 4-core (GPU)', os: 'Windows', pricePerMinute: 0.102, category: 'gpu' },
-]
-
-const MINUTES_IN_WEEK = 7 * 24 * 60
-const MINUTES_IN_MONTH = 30 * 24 * 60 // simplified 30-day month for comparison
-
-const GITHUB_PLANS: GitHubPlan[] = [
-  { id: 'enterprise', name: 'Enterprise', includedMinutes: 50000, budgetUsd: 400 },
-  { id: 'team', name: 'Team', includedMinutes: 3000, budgetUsd: 24 },
-  { id: 'free', name: 'Free', includedMinutes: 2000, budgetUsd: 16 },
-]
+type AppView = 'calculator' | 'usage'
 
 function App() {
+  const [currentView, setCurrentView] = useState<AppView>('calculator')
   const [inputMode, setInputMode] = useState<'cost' | 'minutes'>('cost')
   const [monthlyMinutes, setMonthlyMinutes] = useState('')
   const [costInput, setCostInput] = useState('')
@@ -313,9 +259,28 @@ function App() {
             </h1>
           </div>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Compare the cost of GitHub-hosted runners vs. self-hosted infrastructure
+            Compare runner costs and analyze your usage data
           </p>
+          <div className="pt-4">
+            <Tabs value={currentView} onValueChange={(v) => setCurrentView(v as AppView)} className="w-full">
+              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+                <TabsTrigger value="calculator" className="gap-2">
+                  <Coins className="w-4 h-4" />
+                  Cost Calculator
+                </TabsTrigger>
+                <TabsTrigger value="usage" className="gap-2">
+                  <ChartBar className="w-4 h-4" />
+                  Usage Analysis
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
+
+        {currentView === 'usage' ? (
+          <UsageAnalysis />
+        ) : (
+          <>
 
         <Card className="shadow-lg">
           <CardHeader>
@@ -591,6 +556,13 @@ function App() {
                       Select all
                     </Button>
                     <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedRunners(DEFAULT_RUNNER_IDS)}
+                    >
+                      Select Default Runners
+                    </Button>
+                    <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setSelectedRunners([])}
@@ -685,8 +657,19 @@ function App() {
                                 }}
                                 aria-label={`Toggle ${runner.name}`}
                               />
-                              <div className="flex flex-col">
-                                <span className="font-medium leading-tight">{runner.name}</span>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <span className="font-medium leading-tight">{runner.name}</span>
+                                  {runner.imageLabels && runner.imageLabels.length > 0 && (
+                                    <div className="flex flex-wrap items-center justify-end gap-1">
+                                      {runner.imageLabels.map((label) => (
+                                        <Badge key={label} variant="secondary" className="text-[10px]">
+                                          {label}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                                 <span className="text-xs text-muted-foreground">{formatCurrency(runner.pricePerMinute)}/min</span>
                                 {planMinutes !== null && (
                                   <span className="text-[11px] text-muted-foreground">Included Minutes: {planMinutes.toLocaleString()}</span>
@@ -1099,7 +1082,6 @@ function App() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
       {/* Modal for displaying invalid runner IDs */}
       <Dialog open={showInvalidIdsModal} onOpenChange={setShowInvalidIdsModal}>
@@ -1146,6 +1128,9 @@ function App() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </>
+        )}
+      </div>
     </div>
   )
 }
