@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from 'react'
-import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank, ArrowRight, GithubLogo, Export, Upload } from '@phosphor-icons/react'
+import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank, ArrowRight, Export, Upload } from '@phosphor-icons/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -1059,69 +1059,6 @@ function App() {
             </CardContent>
           </Card>
         )}
-
-        <Card className="shadow-lg border-accent/20 bg-accent/5">
-          <CardHeader>
-            <CardTitle className="text-xl">About This Calculator</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>
-              This calculator helps you compare the cost of GitHub-hosted runners versus
-              self-hosted infrastructure for GitHub Actions workflows.
-            </p>
-            <p>
-              GitHub-hosted runner pricing shown is based on the official 2026 rates from{' '}
-              <a
-                href="https://docs.github.com/en/billing/reference/actions-runner-pricing"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-accent hover:underline font-medium"
-              >
-                GitHub's documentation
-              </a>
-              .
-            </p>
-            <p>
-              Self-hosted costs should include infrastructure expenses (compute, storage,
-              networking) divided by expected usage to determine your per-minute or per-hour
-              rate.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg">
-          <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between py-6">
-            <a
-              href="https://github.com/aatmmr/github-actions-cost-calculator"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary font-semibold hover:underline"
-            >
-              <GithubLogo size={22} weight="duotone" />
-              Help adding some ✨
-            </a>
-
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <img
-                src="https://github.com/aatmmr.png?size=80"
-                alt="GitHub avatar for aatmmr"
-                className="h-10 w-10 rounded-full border border-border"
-                loading="lazy"
-              />
-              <div className="leading-tight">
-                <p className="font-semibold text-foreground">Built with ✨ by</p>
-                <a
-                  href="https://github.com/aatmmr"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline font-medium"
-                >
-                  @aatmmr
-                </a>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
       {/* Modal for displaying invalid runner IDs */}
       <Dialog open={showInvalidIdsModal} onOpenChange={setShowInvalidIdsModal}>
