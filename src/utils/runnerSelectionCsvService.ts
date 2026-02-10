@@ -5,7 +5,6 @@
 type RunnerType = {
   id: string
   name: string
-  os: string
 }
 
 /**
@@ -28,7 +27,7 @@ function escapeCsvField(field: string): string {
  */
 export function exportSelectionToCsv(selectedIds: string[], allRunners: RunnerType[]): string {
   // Create CSV header
-  const header = 'id,name,os\n'
+  const header = 'id,name\n'
   
   // Convert to Set for O(1) lookup performance
   const selectedIdsSet = new Set(selectedIds)
@@ -36,7 +35,7 @@ export function exportSelectionToCsv(selectedIds: string[], allRunners: RunnerTy
   // Filter to only selected runners and map to CSV rows
   const rows = allRunners
     .filter(runner => selectedIdsSet.has(runner.id))
-    .map(runner => `${escapeCsvField(runner.id)},${escapeCsvField(runner.name)},${escapeCsvField(runner.os)}`)
+    .map(runner => `${escapeCsvField(runner.id)},${escapeCsvField(runner.name)}`)
     .join('\n')
   
   return header + rows
