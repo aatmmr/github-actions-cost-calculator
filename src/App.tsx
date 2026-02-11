@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef } from 'react'
 import { Calculator, TrendUp, Check, Warning, ChartBar, ListChecks, SquaresFour, Coins, ArrowsLeftRight, Clock, Hourglass, CalendarCheck, CalendarBlank, ArrowRight, Export, Upload } from '@phosphor-icons/react'
+import { cn } from '@/lib/utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -388,195 +389,251 @@ function App() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="input-mode" className="text-base font-medium">
+                <Label className="text-base font-medium">
                   Input Mode
                 </Label>
-                <RadioGroup
-                  id="input-mode"
-                  value={inputMode}
-                  onValueChange={(value) => setInputMode(value as 'cost' | 'minutes')}
-                  className="flex gap-4 flex-wrap"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="cost" id="cost" />
-                    <Label htmlFor="cost" className="cursor-pointer font-normal inline-flex items-center gap-2">
-                      <Coins size={16} weight="duotone" className="text-muted-foreground" />
-                      Runner Cost
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="minutes" id="minutes" />
-                    <Label htmlFor="minutes" className="cursor-pointer font-normal inline-flex items-center gap-2">
-                      <Clock size={16} weight="duotone" className="text-muted-foreground" />
-                      Build Minutes
-                    </Label>
-                  </div>
-                </RadioGroup>
+                <p className="text-sm text-muted-foreground">
+                  Select your preferred input method for cost comparison
+                </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
 
-              {inputMode === 'cost' && (
-              <>
+        {/* Input Mode Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Runner Cost Card */}
+          <Card 
+            className={cn(
+              "shadow-lg cursor-pointer transition-all duration-200",
+              inputMode === 'cost' 
+                ? "border-primary bg-white dark:bg-card" 
+                : "border-border bg-muted/50 hover:border-primary/50"
+            )}
+            onClick={() => setInputMode('cost')}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-lg",
+                  inputMode === 'cost' ? "bg-primary/10" : "bg-muted"
+                )}>
+                  <Coins size={20} weight="duotone" className={inputMode === 'cost' ? "text-primary" : "text-muted-foreground"} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-lg">Runner Cost</CardTitle>
+                    {inputMode === 'cost' && (
+                      <Badge variant="default" className="text-xs">Selected</Badge>
+                    )}
+                  </div>
+                  <CardDescription>
+                    Enter your self-hosted runner infrastructure cost
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="time-unit" className="text-base font-medium">
+                <Label htmlFor="time-unit" className="text-sm font-medium">
                   Time Unit
                 </Label>
                 <RadioGroup
                   id="time-unit"
                   value={timeUnit}
                   onValueChange={(value) => setTimeUnit(value as 'minute' | 'hour')}
-                  className="flex gap-4 flex-wrap"
+                  className="flex gap-3 flex-wrap"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="minute" id="minute" />
-                    <Label htmlFor="minute" className="cursor-pointer font-normal inline-flex items-center gap-2">
-                      <Clock size={16} weight="duotone" className="text-muted-foreground" />
+                    <RadioGroupItem value="minute" id="minute" disabled={inputMode !== 'cost'} />
+                    <Label htmlFor="minute" className="cursor-pointer font-normal inline-flex items-center gap-1.5 text-sm">
+                      <Clock size={14} weight="duotone" className="text-muted-foreground" />
                       Per Minute
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hour" id="hour" />
-                    <Label htmlFor="hour" className="cursor-pointer font-normal inline-flex items-center gap-2">
-                      <Hourglass size={16} weight="duotone" className="text-muted-foreground" />
+                    <RadioGroupItem value="hour" id="hour" disabled={inputMode !== 'cost'} />
+                    <Label htmlFor="hour" className="cursor-pointer font-normal inline-flex items-center gap-1.5 text-sm">
+                      <Hourglass size={14} weight="duotone" className="text-muted-foreground" />
                       Per Hour
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="week" id="week" />
-                    <Label htmlFor="week" className="cursor-pointer font-normal inline-flex items-center gap-2">
-                      <CalendarCheck size={16} weight="duotone" className="text-muted-foreground" />
+                    <RadioGroupItem value="week" id="week" disabled={inputMode !== 'cost'} />
+                    <Label htmlFor="week" className="cursor-pointer font-normal inline-flex items-center gap-1.5 text-sm">
+                      <CalendarCheck size={14} weight="duotone" className="text-muted-foreground" />
                       Per Week
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="month" id="month" />
-                    <Label htmlFor="month" className="cursor-pointer font-normal inline-flex items-center gap-2">
-                      <CalendarBlank size={16} weight="duotone" className="text-muted-foreground" />
+                    <RadioGroupItem value="month" id="month" disabled={inputMode !== 'cost'} />
+                    <Label htmlFor="month" className="cursor-pointer font-normal inline-flex items-center gap-1.5 text-sm">
+                      <CalendarBlank size={14} weight="duotone" className="text-muted-foreground" />
                       Per Month
                     </Label>
                   </div>
                 </RadioGroup>
               </div>
 
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-start gap-6 w-full">
-                  <div className="space-y-2 flex-1 min-w-[240px] md:basis-[30%]">
-                    <Label htmlFor="cost-input" className="text-base font-medium">
-                      Infrastructure Cost (USD)
-                    </Label>
-                    <div className="relative w-full">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        $
-                      </span>
-                      <Input
-                        id="cost-input"
-                        type="number"
-                        step="0.0001"
-                        min="0"
-                        placeholder={
-                          timeUnit === 'minute'
-                            ? '0.010'
-                            : timeUnit === 'hour'
-                              ? '0.600'
-                              : timeUnit === 'week'
-                                ? '10.000'
-                                : '50.000'
-                        }
-                        value={costInput}
-                        onChange={(e) => setCostInput(e.target.value)}
-                        className="pl-7 text-lg h-12"
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Add the cost for a single runner for the selected time unit.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-1 items-start pt-1">
-                    <Label htmlFor="usage-percent" className="text-base font-medium">Usage Rate (%)</Label>
-                    <div className="flex items-center gap-3">
-                    <ArrowRight size={20} weight="duotone" className="text-muted-foreground" />
-                    <div className="flex items-center gap-2">
-                      <Input
-                        id="usage-percent"
-                        type="number"
-                        min="1"
-                        max="100"
-                        step="1"
-                        value={usagePercent}
-                        onChange={(e) => setUsagePercent(Number(e.target.value))}
-                        className="w-16 text-center text-lg h-12 px-2"
-                        aria-label="Usage Percentage"
-                      />
-                      <span className="text-base font-medium text-muted-foreground">%</span>
-                    </div>
-                    <ArrowRight size={20} weight="duotone" className="text-muted-foreground" />
-                  </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Relative usage of this runner.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2 flex-1 min-w-[200px] md:basis-[30%]">
-                    <Label className="text-base font-medium">Calculated Cost (/min)</Label>
-                    <div className="flex h-12 items-center rounded-md border bg-muted/50 px-3 text-lg font-semibold text-foreground min-w-[180px]">
-                      {selfHostedCostPerMinute !== null ? formatCurrency(selfHostedCostPerMinute) : '—'}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      The effective cost per minute based on your input and usage percentage.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              </>
-              )}
-
-              {inputMode === 'minutes' && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="monthly-minutes" className="text-base font-medium">
-                    Monthly Build Minutes
+                  <Label htmlFor="cost-input" className="text-sm font-medium">
+                    Infrastructure Cost (USD)
                   </Label>
-                  <Input
-                    id="monthly-minutes"
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="e.g., 10000"
-                    value={monthlyMinutes}
-                    onChange={(e) => setMonthlyMinutes(e.target.value)}
-                    className="text-lg h-12"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Enter your estimated monthly workflow minutes
-                  </p>
-                  {monthlyMinutes && parsedMinutes === null && (
-                    <p className="text-xs text-destructive mt-1">
-                      Please enter a valid positive number of minutes
-                    </p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-base font-medium">Quick Select</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {[1000, 5000, 10000, 50000, 100000].map((minutes) => (
-                      <Button
-                        key={minutes}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setMonthlyMinutes(minutes.toString())}
-                        className="font-medium"
-                      >
-                        {minutes.toLocaleString()}
-                      </Button>
-                    ))}
+                  <div className="relative w-full">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      $
+                    </span>
+                    <Input
+                      id="cost-input"
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      placeholder={
+                        timeUnit === 'minute'
+                          ? '0.010'
+                          : timeUnit === 'hour'
+                            ? '0.600'
+                            : timeUnit === 'week'
+                              ? '10.000'
+                              : '50.000'
+                      }
+                      value={costInput}
+                      onChange={(e) => setCostInput(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="pl-7 text-base h-10"
+                      disabled={inputMode !== 'cost'}
+                    />
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Cost for a single runner for the selected time unit
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="usage-percent" className="text-sm font-medium">Usage Rate</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="usage-percent"
+                      type="number"
+                      min="1"
+                      max="100"
+                      step="1"
+                      value={usagePercent}
+                      onChange={(e) => setUsagePercent(Number(e.target.value))}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-20 text-center text-base h-10"
+                      aria-label="Usage Percentage"
+                      disabled={inputMode !== 'cost'}
+                    />
+                    <span className="text-sm font-medium text-muted-foreground">%</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Relative usage of this runner
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Calculated Cost (/min)</Label>
+                  <div className="flex h-10 items-center rounded-md border bg-muted/50 px-3 text-base font-semibold text-foreground">
+                    {selfHostedCostPerMinute !== null ? formatCurrency(selfHostedCostPerMinute) : '—'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Effective cost per minute based on your input
+                  </p>
                 </div>
               </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Build Minutes Card */}
+          <Card 
+            className={cn(
+              "shadow-lg cursor-pointer transition-all duration-200",
+              inputMode === 'minutes' 
+                ? "border-primary bg-white dark:bg-card" 
+                : "border-border bg-muted/50 hover:border-primary/50"
+            )}
+            onClick={() => setInputMode('minutes')}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-lg",
+                  inputMode === 'minutes' ? "bg-primary/10" : "bg-muted"
+                )}>
+                  <Clock size={20} weight="duotone" className={inputMode === 'minutes' ? "text-primary" : "text-muted-foreground"} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-lg">Build Minutes</CardTitle>
+                    {inputMode === 'minutes' && (
+                      <Badge variant="default" className="text-xs">Selected</Badge>
+                    )}
+                  </div>
+                  <CardDescription>
+                    Enter your estimated monthly workflow minutes
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="monthly-minutes" className="text-sm font-medium">
+                  Monthly Build Minutes
+                </Label>
+                <Input
+                  id="monthly-minutes"
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="e.g., 10000"
+                  value={monthlyMinutes}
+                  onChange={(e) => setMonthlyMinutes(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-base h-10"
+                  disabled={inputMode !== 'minutes'}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter your estimated monthly workflow minutes
+                </p>
+                {monthlyMinutes && parsedMinutes === null && (
+                  <p className="text-xs text-destructive">
+                    Please enter a valid positive number of minutes
+                  </p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Quick Select</Label>
+                <div className="flex flex-wrap gap-2">
+                  {[1000, 5000, 10000, 50000, 100000].map((minutes) => (
+                    <Button
+                      key={minutes}
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMonthlyMinutes(minutes.toString());
+                      }}
+                      className="font-medium text-xs"
+                      disabled={inputMode !== 'minutes'}
+                    >
+                      {minutes.toLocaleString()}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <p className="text-xs text-muted-foreground">
+                  This mode calculates cost based on runner minutes consumed, useful for comparing GitHub-hosted runner pricing tiers.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {currentView.tab === 'select' && (
             <Card className="shadow-lg">
