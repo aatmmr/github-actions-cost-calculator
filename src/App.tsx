@@ -12,8 +12,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import { exportSelectionToCsv, parseSelectionFromCsv, downloadCsv } from '@/utils/runnerSelectionCsvService'
 import { UsageAnalysis } from '@/components/UsageAnalysis'
+import { CopilotCalculator } from '@/components/CopilotCalculator'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar, AppView } from '@/components/AppSidebar'
+import type { CopilotTab } from '@/components/AppSidebar'
 import {
   GITHUB_HOSTED_RUNNERS,
   GITHUB_PLANS,
@@ -100,6 +102,7 @@ const GITHUB_PLANS: GitHubPlan[] = [
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>({ section: 'calculator', tab: 'select' })
+  const [copilotTab, setCopilotTab] = useState<CopilotTab>('calculator')
   const [inputMode, setInputMode] = useState<'cost' | 'minutes'>('cost')
   const [monthlyMinutes, setMonthlyMinutes] = useState('')
   const [costInput, setCostInput] = useState('')
@@ -321,9 +324,16 @@ function App() {
     return null
   }
 
+  const handleNavigate = (view: AppView) => {
+    setCurrentView(view)
+    if (view.section === 'copilot') {
+      setCopilotTab(view.tab)
+    }
+  }
+
   return (
     <SidebarProvider defaultOpen={true}>
-      <AppSidebar currentView={currentView} onNavigate={setCurrentView} />
+      <AppSidebar currentView={currentView} onNavigate={handleNavigate} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
@@ -340,6 +350,14 @@ function App() {
 
         {currentView.section === 'usage' ? (
           <UsageAnalysis />
+        ) : currentView.section === 'copilot' ? (
+          <CopilotCalculator
+            activeTab={copilotTab}
+            onTabChange={(tab) => {
+              setCopilotTab(tab)
+              setCurrentView({ section: 'copilot', tab })
+            }}
+          />
         ) : (
           <>
 
