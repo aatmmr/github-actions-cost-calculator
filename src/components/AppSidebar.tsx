@@ -1,5 +1,5 @@
 import { ChevronDown, Info } from 'lucide-react'
-import { Calculator, Coins, ListChecks, SquaresFour, ArrowsLeftRight, ChartBar, GithubLogo } from '@phosphor-icons/react'
+import { Calculator, Coins, ListChecks, SquaresFour, ArrowsLeftRight, ChartBar, GithubLogo, Robot, TextT, Table, ArrowsHorizontal } from '@phosphor-icons/react'
 import {
   Sidebar,
   SidebarContent,
@@ -25,9 +25,11 @@ import {
 import { Separator } from '@/components/ui/separator'
 
 export type CalculatorTab = 'select' | 'visual' | 'examples' | 'comparison'
+export type CopilotTab = 'calculator' | 'prompt' | 'plans' | 'models'
 export type AppView =
   | { section: 'calculator'; tab: CalculatorTab }
   | { section: 'usage' }
+  | { section: 'copilot'; tab: CopilotTab }
 
 interface AppSidebarProps {
   currentView: AppView
@@ -39,6 +41,13 @@ const calculatorItems = [
   { title: 'Visual Comparison', tab: 'visual' as const, icon: SquaresFour },
   { title: 'Example Costs', tab: 'examples' as const, icon: Coins },
   { title: 'Cost Comparison', tab: 'comparison' as const, icon: ArrowsLeftRight },
+]
+
+const copilotItems = [
+  { title: 'Token Calculator', tab: 'calculator' as const, icon: Coins },
+  { title: 'Prompt Estimator', tab: 'prompt' as const, icon: TextT },
+  { title: 'Plan Comparison', tab: 'plans' as const, icon: ChartBar },
+  { title: 'Model Comparison', tab: 'models' as const, icon: Table },
 ]
 
 export function AppSidebar({ currentView, onNavigate }: AppSidebarProps) {
@@ -53,6 +62,7 @@ export function AppSidebar({ currentView, onNavigate }: AppSidebarProps) {
 
   const isCalculatorActive = currentView.section === 'calculator'
   const isUsageActive = currentView.section === 'usage'
+  const isCopilotActive = currentView.section === 'copilot'
 
   return (
     <Sidebar collapsible="icon">
@@ -131,6 +141,47 @@ export function AppSidebar({ currentView, onNavigate }: AppSidebarProps) {
                   <span>Usage Analysis</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              {/* Copilot Calculator with sub-items */}
+              <Collapsible defaultOpen asChild className="group/copilot">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      tooltip="Copilot Calculator"
+                      isActive={isCopilotActive}
+                    >
+                      <Robot size={18} weight="duotone" />
+                      <span>Copilot Calculator</span>
+                      <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/copilot:rotate-180" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {copilotItems.map((item) => (
+                        <SidebarMenuSubItem key={item.tab}>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={
+                              currentView.section === 'copilot' &&
+                              currentView.tab === item.tab
+                            }
+                          >
+                            <button
+                              onClick={() =>
+                                handleNavigate({ section: 'copilot', tab: item.tab })
+                              }
+                              className="w-full"
+                            >
+                              <item.icon size={16} weight="duotone" />
+                              <span>{item.title}</span>
+                            </button>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
