@@ -280,7 +280,20 @@ function App() {
       }))
     : []
 
+  // Chart data for minutes mode - shows monthly cost per runner
+  const minutesChartData = parsedMinutes !== null
+    ? filteredRunners
+        .map((runner) => ({
+          name: runner.name,
+          os: runner.os,
+          monthlyCost: runner.pricePerMinute * parsedMinutes,
+          pricePerMinute: runner.pricePerMinute,
+        }))
+        .sort((a, b) => a.monthlyCost - b.monthlyCost)
+    : []
+
   const exampleDurations = [1, 10, 15, 20, 30]
+  const exampleMinuteVolumes = [1000, 5000, 10000, 50000, 100000]
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -785,6 +798,7 @@ function App() {
         )}
 
         {currentView.tab === 'visual' && (
+          inputMode === 'cost' ? (
             selfHostedCostPerMinute !== null ? (
               <Card className="shadow-lg">
                 <CardHeader>
@@ -851,9 +865,93 @@ function App() {
                 </CardContent>
               </Card>
             )
+          ) : (
+            parsedMinutes !== null && minutesChartData.length > 0 ? (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <ChartBar size={24} weight="duotone" className="text-primary" />
+                    <CardTitle className="text-2xl">Monthly Cost Comparison</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Estimated monthly cost for {parsedMinutes?.toLocaleString()} build minutes across selected runners
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={500}>
+                    <BarChart
+                      data={minutesChartData}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.88 0.01 250)" opacity={0.3} />
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                        tick={{ fill: 'oklch(0.45 0.02 250)', fontSize: 12 }}
+                      />
+                      <YAxis
+                        label={{ value: 'Monthly Cost (USD)', angle: -90, position: 'insideLeft', style: { fill: 'oklch(0.45 0.02 250)' } }}
+                        tick={{ fill: 'oklch(0.45 0.02 250)', fontSize: 12 }}
+                        tickFormatter={(value) => `$${value.toFixed(0)}`}
+                      />
+                      <Tooltip
+                        content={({ active, payload }: any) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload
+                            return (
+                              <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+                                <p className="font-semibold mb-2">{data.name}</p>
+                                <div className="space-y-1 text-sm">
+                                  <p className="text-muted-foreground">
+                                    Per minute: <span className="font-medium text-foreground">{formatCurrency(data.pricePerMinute)}</span>
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    Monthly ({parsedMinutes?.toLocaleString()} min): <span className="font-medium text-foreground">{formatCurrencyUsd2(data.monthlyCost)}</span>
+                                  </p>
+                                </div>
+                              </div>
+                            )
+                          }
+                          return null
+                        }}
+                      />
+                      <Bar dataKey="monthlyCost" name="Monthly Cost" radius={[8, 8, 0, 0]}>
+                        {minutesChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={getOSChartColor(entry.os)} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <div className="flex justify-center gap-6 mt-6 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.70 0.15 40)' }} />
+                      <span className="text-sm text-muted-foreground">Linux</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.60 0.20 240)' }} />
+                      <span className="text-sm text-muted-foreground">Windows</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: 'oklch(0.50 0.05 250)' }} />
+                      <span className="text-sm text-muted-foreground">macOS</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg">
+                <CardContent className="py-10 text-center text-muted-foreground">
+                  Enter your monthly build minutes to see the cost comparison.
+                </CardContent>
+              </Card>
+            )
+          )
         )}
 
         {currentView.tab === 'examples' && (
+          inputMode === 'cost' ? (
             selfHostedCostPerMinute !== null ? (
               <Card className="shadow-lg">
                 <CardHeader>
@@ -930,9 +1028,65 @@ function App() {
                 </CardContent>
               </Card>
             )
+          ) : (
+            parsedMinutes !== null && filteredRunners.length > 0 ? (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-2xl">Example monthly costs</CardTitle>
+                  <CardDescription>
+                    Estimated monthly cost for selected runners at different usage levels
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse min-w-[720px]">
+                    <thead>
+                      <tr className="text-left text-muted-foreground">
+                        <th className="py-2 pr-4 font-medium">Runner</th>
+                        <th className="py-2 px-2 font-medium text-right">Per Minute</th>
+                        {exampleMinuteVolumes.map((mins) => (
+                          <th key={mins} className="py-2 px-2 font-medium text-right">{mins.toLocaleString()} min</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {filteredRunners.map((runner) => (
+                        <tr key={runner.id}>
+                          <td className="py-3 pr-4">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={getOSBadgeColor(runner.os)}>{runner.os}</Badge>
+                              <span className="font-medium text-foreground">{runner.name}</span>
+                            </div>
+                            {planDetails && (
+                              <p className="text-[11px] text-muted-foreground mt-1">
+                                Included Minutes: {calculatePlanMinutes(runner.pricePerMinute)?.toLocaleString()}
+                              </p>
+                            )}
+                          </td>
+                          <td className="py-3 px-2 text-right tabular-nums">{formatCurrency(runner.pricePerMinute)}</td>
+                          {exampleMinuteVolumes.map((mins) => (
+                            <td key={mins} className="py-3 px-2 text-right tabular-nums">{formatCurrencyUsd2(runner.pricePerMinute * mins)}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {filteredRunners.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center mt-4">Select at least one GitHub-hosted runner to see examples.</p>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg">
+                <CardContent className="py-10 text-center text-muted-foreground">
+                  Enter your monthly build minutes to see example costs.
+                </CardContent>
+              </Card>
+            )
+          )
         )}
 
         {currentView.tab === 'comparison' && (
+          inputMode === 'cost' ? (
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl">Cost Comparison</CardTitle>
@@ -1049,72 +1203,82 @@ function App() {
                 )}
               </CardContent>
             </Card>
-        )}
-
-        {inputMode === 'minutes' && monthlyCostData.length > 0 && (
-          <Card className="shadow-lg">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <ChartBar size={24} weight="duotone" className="text-primary" />
-                <CardTitle className="text-2xl">Monthly Cost Comparison</CardTitle>
-              </div>
-              <CardDescription>
-                Estimated monthly cost for {parsedMinutes?.toLocaleString()} build minutes across all selected runners
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="text-left border-b">
-                      <th className="py-3 pr-4 font-medium text-muted-foreground">Runner</th>
-                      <th className="py-3 px-4 font-medium text-muted-foreground">OS</th>
-                      <th className="py-3 px-4 font-medium text-muted-foreground text-right">Per Minute</th>
-                      <th className="py-3 px-4 font-medium text-muted-foreground text-right">Monthly Cost</th>
-                      <th className="py-3 px-4 font-medium text-muted-foreground text-right">vs. Cheapest</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {monthlyCostData.map((runner, index) => {
-                      const isLowest = index === 0
-                      const costDiff = isLowest ? 0 : runner.monthlyCost - monthlyCostData[0].monthlyCost
-                      
-                      return (
-                        <tr key={runner.id} className="hover:bg-muted/30 transition-colors">
-                          <td className="py-3 pr-4">
-                            <span className="font-medium text-foreground">{runner.name}</span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <Badge variant="outline" className={getOSBadgeColor(runner.os)}>
-                              {runner.os}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-4 text-right tabular-nums text-foreground">
-                            {formatCurrency(runner.pricePerMinute)}
-                          </td>
-                          <td className="py-3 px-4 text-right tabular-nums font-semibold text-foreground">
-                            {formatCurrencyUsd2(runner.monthlyCost)}
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            {isLowest ? (
-                              <div className="inline-flex items-center gap-1.5 text-success font-semibold">
-                                <Check size={16} weight="bold" />
-                                <span>Lowest</span>
-                              </div>
-                            ) : (
-                              <span className="text-destructive font-medium tabular-nums">
-                                +{formatCurrencyUsd2(costDiff)}
-                              </span>
-                            )}
-                          </td>
+          ) : (
+            parsedMinutes !== null && monthlyCostData.length > 0 ? (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-2xl">Monthly Cost Comparison</CardTitle>
+                  <CardDescription>
+                    Estimated monthly cost for {parsedMinutes?.toLocaleString()} build minutes across all selected runners
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="text-left border-b">
+                          <th className="py-3 pr-4 font-medium text-muted-foreground">Runner</th>
+                          <th className="py-3 px-4 font-medium text-muted-foreground">OS</th>
+                          <th className="py-3 px-4 font-medium text-muted-foreground text-right">Per Minute</th>
+                          <th className="py-3 px-4 font-medium text-muted-foreground text-right">Monthly Cost</th>
+                          <th className="py-3 px-4 font-medium text-muted-foreground text-right">vs. Cheapest</th>
                         </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                      </thead>
+                      <tbody className="divide-y">
+                        {monthlyCostData.map((runner, index) => {
+                          const isLowest = index === 0
+                          const costDiff = isLowest ? 0 : runner.monthlyCost - monthlyCostData[0].monthlyCost
+                          
+                          return (
+                            <tr key={runner.id} className="hover:bg-muted/30 transition-colors">
+                              <td className="py-3 pr-4">
+                                <span className="font-medium text-foreground">{runner.name}</span>
+                              </td>
+                              <td className="py-3 px-4">
+                                <Badge variant="outline" className={getOSBadgeColor(runner.os)}>
+                                  {runner.os}
+                                </Badge>
+                              </td>
+                              <td className="py-3 px-4 text-right tabular-nums text-foreground">
+                                {formatCurrency(runner.pricePerMinute)}
+                              </td>
+                              <td className="py-3 px-4 text-right tabular-nums font-semibold text-foreground">
+                                {formatCurrencyUsd2(runner.monthlyCost)}
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                {isLowest ? (
+                                  <div className="inline-flex items-center gap-1.5 text-success font-semibold">
+                                    <Check size={16} weight="bold" />
+                                    <span>Lowest</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-destructive font-medium tabular-nums">
+                                    +{formatCurrencyUsd2(costDiff)}
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {filteredRunners.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>Select at least one GitHub-hosted runner to compare.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg">
+                <CardContent className="py-10 text-center text-muted-foreground">
+                  Enter your monthly build minutes to see the cost comparison.
+                </CardContent>
+              </Card>
+            )
+          )
         )}
 
       {/* Modal for displaying invalid runner IDs */}
